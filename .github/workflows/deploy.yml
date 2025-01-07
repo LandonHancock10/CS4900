@@ -8,10 +8,20 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Use the same Node version as locally
+
+      - name: Install Dependencies
+        run: yarn install  # Or `npm install` if you use npm
+
+      - name: Build Vue App
+        run: yarn build  # Or `npm run build` if you use npm
 
       - name: Install AWS CLI
         run: sudo apt-get -y install awscli
@@ -21,8 +31,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-1  # Replace with your S3 bucket region
+          aws-region: us-west-1  # Change this if your region differs
 
       - name: Sync Files to S3
-        run: |
-          aws s3 sync ./dist s3://webspark-crm --delete
+        run: aws s3 sync ./dist s3://webspark-crm --delete
