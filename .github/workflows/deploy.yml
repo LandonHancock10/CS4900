@@ -12,19 +12,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Change Directory to Project Folder
-        run: cd webspark-crm
-
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # Ensure the Node.js version matches your local setup
+          node-version: '18'  # Matches your local Node.js version
 
       - name: Install Dependencies
-        run: yarn install  # Or `npm install` if you use npm
+        working-directory: webspark-crm  # Navigate to the project directory
+        run: yarn install
 
       - name: Build Vue App
-        run: yarn build  # Or `npm run build` if you use npm
+        working-directory: webspark-crm  # Navigate to the project directory
+        run: yarn build
 
       - name: Install AWS CLI
         run: sudo apt-get -y install awscli
@@ -37,4 +36,5 @@ jobs:
           aws-region: us-west-1  # Change if your region differs
 
       - name: Sync Files to S3
+        working-directory: webspark-crm  # Make sure we’re in the correct folder
         run: aws s3 sync ./dist s3://webspark-crm --delete
