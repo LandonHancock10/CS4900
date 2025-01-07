@@ -25,4 +25,4 @@ jobs:
 
       - name: Sync Files to S3
         run: |
-          aws s3 sync ./dist s3://your-bucket-name --delete
+          aws s3 sync ./dist s3://webspark-crm --delete
