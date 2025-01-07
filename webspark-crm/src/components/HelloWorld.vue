@@ -28,22 +28,19 @@ export default {
 </script>
 
 <style scoped>
-/* Apply Discord’s "gg sans" font to the component */
 * {
   font-family: 'gg sans', sans-serif;
 }
 
-/* Container for the login card */
 .login-card {
   width: 100%;
   max-width: 400px;
   padding: 20px;
-  background-color: #2B2D31; /* Discord second darkest background */
+  background-color: #2B2D31;
   border-radius: 8px;
   text-align: center;
 }
 
-/* Logo styling */
 .logo-container {
   margin-bottom: 20px;
 }
@@ -53,42 +50,39 @@ export default {
   object-fit: cover;
 }
 
-/* Title and subtitle styling */
 .title {
   font-size: 24px;
   font-weight: 700;
-  color: #F2F3F5; /* Light text */
+  color: #F2F3F5;
   margin-bottom: 10px;
 }
 
 .subtitle {
-  color: #F2F3F5; /* Light text */
+  color: #F2F3F5;
   font-size: 14px;
   margin-bottom: 100px;
 }
 
-/* Input fields */
 .input-field {
   width: 100%;
   padding: 12px 16px;
   margin-bottom: 16px;
-  border: 1px solid #313338; /* Lightest background for borders */
-  background-color: #1E1F22; /* Darkest background */
+  border: 1px solid #313338;
+  background-color: #1E1F22;
   border-radius: 4px;
   font-size: 16px;
   box-sizing: border-box;
-  color: #F2F3F5; /* Light text for input */
+  color: #F2F3F5;
 }
 
 .input-field::placeholder {
-  color: #666666; /* Placeholder text */
+  color: #666666;
 }
 
-/* Login button */
 .login-button {
   width: 100%;
   padding: 12px 16px;
-  background-color: #5865F2; /* Discord button blue */
+  background-color: #5865F2;
   color: white;
   font-size: 18px;
   font-weight: 600;
@@ -98,6 +92,6 @@ export default {
 }
 
 .login-button:hover {
-  background-color: #4752C4; /* Darker blue for hover */
+  background-color: #4752C4;
 }
 </style>
