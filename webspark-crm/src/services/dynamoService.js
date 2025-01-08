@@ -1,62 +1,71 @@
-import { DynamoDBClient, PutItemCommand, GetItemCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
+// src/services/dynamoService.js
+import AWS from 'aws-sdk';
+import bcrypt from 'bcryptjs'; // Import bcrypt for hashing
+import { v4 as uuidv4 } from 'uuid'; // For generating unique userId
 
-const REGION = process.env.VUE_APP_AWS_REGION;
-
-const dynamoClient = new DynamoDBClient({
-  region: REGION,
-  credentials: {
-    accessKeyId: process.env.VUE_APP_AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.VUE_APP_AWS_SECRET_ACCESS_KEY,
-  },
+// Configure AWS
+AWS.config.update({
+  region: process.env.VUE_APP_AWS_REGION,
+  accessKeyId: process.env.VUE_APP_AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.VUE_APP_AWS_SECRET_ACCESS_KEY,
 });
 
-export async function createUser(userId, firstName, lastName, email) {
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const TABLE_NAME = 'Users';
+
+// Create user function
+export const createUser = async (user) => {
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(user.password, saltRounds); // Hash the password
+
   const params = {
-    TableName: "Users",
+    TableName: TABLE_NAME,
     Item: {
-      userId: { S: userId },
-      firstName: { S: firstName },
-      lastName: { S: lastName },
-      email: { S: email },
+      userId: uuidv4(), // Unique ID for partition key
+      email: user.email, // Store email but not as the key
+      passwordHash: hashedPassword, // Store the hashed password
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profilePicture: user.profilePicture || 'default.png',
     },
   };
 
-  const command = new PutItemCommand(params);
   try {
-    await dynamoClient.send(command);
-    console.log("User created successfully.");
+    await dynamoDB.put(params).promise();
+    return { success: true, message: 'User created successfully!' };
   } catch (error) {
-    console.error("Error creating user:", error);
+    console.error('Error creating user:', error);
+    return { success: false, message: 'Error creating user.' };
   }
-}
+};
 
-export async function getUser(userId) {
+// Login user function
+export const loginUser = async (email, password) => {
   const params = {
-    TableName: "Users",
-    Key: {
-      userId: { S: userId },
+    TableName: TABLE_NAME,
+    FilterExpression: 'email = :email',
+    ExpressionAttributeValues: {
+      ':email': email,
     },
   };
 
-  const command = new GetItemCommand(params);
   try {
-    const response = await dynamoClient.send(command);
-    return response.Item;
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    return null;
-  }
-}
+    const result = await dynamoDB.scan(params).promise(); // Scan the table for matching email
+    const user = result.Items.length > 0 ? result.Items[0] : null;
 
-export async function getAllUsers() {
-  const params = { TableName: "Users" };
-  const command = new ScanCommand(params);
+    if (!user) {
+      return { success: false, message: 'User not found.' };
+    }
 
-  try {
-    const data = await dynamoClient.send(command);
-    return data.Items;
+    // Compare the provided password with the stored hash
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return { success: false, message: 'Invalid password.' };
+    }
+
+    return { success: true, message: 'Login successful!', user };
   } catch (error) {
-    console.error("Error fetching users:", error);
-    return [];
+    console.error('Error logging in:', error);
+    return { success: false, message: 'Error logging in.' };
   }
-}
+};
