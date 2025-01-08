@@ -23,6 +23,10 @@ jobs:
 
       - name: Build Vue App
         working-directory: webspark-crm
+        env:
+          VUE_APP_AWS_REGION: ${{ secrets.VUE_APP_AWS_REGION }}
+          VUE_APP_AWS_ACCESS_KEY_ID: ${{ secrets.VUE_APP_AWS_ACCESS_KEY_ID }}
+          VUE_APP_AWS_SECRET_ACCESS_KEY: ${{ secrets.VUE_APP_AWS_SECRET_ACCESS_KEY }}
         run: yarn build
 
       - name: Install AWS CLI
@@ -31,9 +35,9 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-1
+          aws-access-key-id: ${{ secrets.VUE_APP_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.VUE_APP_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.VUE_APP_AWS_REGION }}
 
       - name: Sync Files to S3
         working-directory: webspark-crm
