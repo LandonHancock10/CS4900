@@ -1,12 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import HelloWorld from '@/components/HelloWorld.vue';
-import SignUp from '@/components/SignUp.vue';
-import Communicate from '@/components/Communicate.vue'; // Import the Communicate page
+import { createRouter, createWebHistory } from "vue-router";
+import WorkPage from "@/components/WorkPage.vue";
+import CommunicatePage from "@/components/CommunicatePage.vue";
+import SettingsPage from "@/components/SettingsPage.vue";
 
 const routes = [
-  { path: '/', name: 'Home', component: HelloWorld },
-  { path: '/signup', name: 'SignUp', component: SignUp },
-  { path: '/communicate', name: 'Communicate', component: Communicate }, // Add Communicate route
+  { path: "/work", component: WorkPage },
+  { path: "/communicate", component: CommunicatePage },
+  { path: "/settings", component: SettingsPage },
 ];
 
 const router = createRouter({
