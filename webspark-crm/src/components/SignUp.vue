@@ -32,6 +32,8 @@
 </template>
 
 <script>
+import { createUser } from '@/services/dynamoService'; // Importing createUser function
+import { v4 as uuidv4 } from 'uuid';
 export default {
   name: 'SignUp',
   data() {
@@ -66,24 +68,36 @@ export default {
 
       return Object.keys(this.errors).length === 0;
     },
+
     registerUser() {
       if (!this.validateForm()) {
         alert('Please correct the errors in the form.');
         return;
       }
 
-      const formData = {
+      const userData = {
+        userId: uuidv4(), // Generate unique userId
         firstName: this.firstName,
         lastName: this.lastName,
         email: this.email,
-        password: this.password,
-        profilePicture: this.profilePicture ? this.profilePicture.name : 'No file selected',
+        password: this.password, // Password should be hashed for security in production
+        profilePicture: this.profilePicture ? this.profilePicture.name : null,
       };
 
-      console.log('Registering user:', formData);
-
-      // Placeholder for backend connection
-      alert('Account created successfully!');
+      createUser(userData)
+        .then((response) => {
+          if (response.success) {
+            console.log('User created successfully:', response);
+            // Redirect to login page
+            this.$router.push('/'); // Redirect to login page after signup
+          } else {
+            alert(response.message || 'Error creating account.');
+          }
+        })
+        .catch((error) => {
+          console.error('Error creating user:', error);
+          alert('An error occurred while creating the account.');
+        });
     },
   },
 };
