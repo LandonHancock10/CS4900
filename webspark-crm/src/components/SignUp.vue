@@ -8,7 +8,7 @@
       <!-- Title and subtitle -->
       <h1 class="title">Sign Up</h1>
       <p class="subtitle">
-        Looking to log in?
+        Already have an account?
         <router-link to="/" class="login-link">Log in here</router-link>
       </p>
   
