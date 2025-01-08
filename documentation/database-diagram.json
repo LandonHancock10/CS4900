@@ -1,0 +1,73 @@
+{
+    "Users": {
+      "userId": "string",
+      "username": "string",
+      "email": "string",
+      "passwordHash": "string",
+      "assignedClients": ["clientId"],
+      "permissions": {
+        "canManageClients": true
+      }
+    },
+    "Clients": {
+      "clientId": "string",
+      "clientName": "string",
+      "contactInfo": {
+        "email": "string",
+        "phone": "string"
+      },
+      "channels": {
+        "tasks": {
+          "type": "task",
+          "required": true,
+          "tasksList": [
+            {
+              "taskId": "string",
+              "taskDescription": "string",
+              "status": "pending | completed",
+              "assignedUserId": "string",
+              "dueDate": "date",
+              "recurringFrequency": "number",
+              "nextRecurringDate": "date"
+            }
+          ]
+        },
+        "notes": {
+          "type": "note",
+          "notesList": [
+            {
+              "noteId": "string",
+              "noteContent": "string",
+              "createdBy": "string",
+              "timestamp": "date"
+            }
+          ]
+        }
+      }
+    },
+    "Workspaces": {
+      "workspaceId": "string",
+      "userId": "string",
+      "tasks": [
+        {
+          "taskId": "string",
+          "clientId": "string",
+          "clientName": "string",
+          "taskDescription": "string",
+          "status": "pending | completed",
+          "dueDate": "date",
+          "recurringFrequency": "number",
+          "nextRecurringDate": "date"
+        }
+      ]
+    },
+    "Calls": {
+      "callId": "string",
+      "userId": "string",
+      "clientId": "string",
+      "status": "initiated | ended",
+      "confirmationStatus": "confirmed | canceled",
+      "timestamp": "date"
+    }
+  }
+  

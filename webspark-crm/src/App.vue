@@ -1,25 +1,22 @@
 <template>
   <div id="app" class="app-container">
-    <HelloWorld msg="Welcome Back" />
+    <!-- Only display components via router -->
+    <router-view />
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue';
-
 export default {
   name: 'App',
-  components: {
-    HelloWorld,
-  },
 };
 </script>
 
 <style>
+/* Font Face Definitions */
 @font-face {
   font-family: 'gg sans';
   src: url('@/assets/fonts/gg sans Regular.ttf') format('truetype');
-  font-weight: 400; /* Normal weight */
+  font-weight: 400;
 }
 
 @font-face {
@@ -33,6 +30,7 @@ body {
   padding: 0;
   font-family: 'gg sans', sans-serif;
   background-color: #1E1F22;
+  color: #F2F3F5;
 }
 
 .app-container {

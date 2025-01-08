@@ -1,13 +1,15 @@
 <template>
   <div class="login-card">
-    <!-- Logo placeholder -->
+    <!-- Logo -->
     <div class="logo-container">
       <img src="@/assets/WebsparkFavicon.png" alt="App Logo" class="logo" />
     </div>
 
-    <!-- Welcome message -->
-    <h1 class="title">{{ msg }}</h1>
-    <p class="subtitle">New here? Create an account</p>
+    <h1 class="title">{{"Welcome Back"}}</h1>
+    <p class="subtitle">
+      New here?
+      <router-link to="/signup" class="signup-link">Create an account</router-link>
+    </p>
 
     <!-- Form Fields -->
     <form class="login-form">
@@ -30,6 +32,17 @@ export default {
 <style scoped>
 * {
   font-family: 'gg sans', sans-serif;
+}
+
+.signup-link {
+  color: #5865f2;
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.signup-link:hover {
+  color: #4752c4;
 }
 
 .login-card {
