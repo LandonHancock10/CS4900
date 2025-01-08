@@ -1,62 +1,41 @@
 <template>
-  <div class="signup-card">
+  <div class="login-card">
     <div class="logo-container">
       <img src="@/assets/WebsparkFavicon.png" alt="App Logo" class="logo" />
     </div>
-    <h1 class="title">Sign Up</h1>
+    <h1 class="title">Welcome Back</h1>
     <p class="subtitle">
-      Looking to log in? <router-link to="/" class="login-link">Log in here</router-link>
+      New here?
+      <router-link to="/signup" class="signup-link">Create an account</router-link>
     </p>
-    <form @submit.prevent="registerUser" class="signup-form">
-      <input type="text" v-model="firstName" placeholder="First Name" class="input-field" />
-      <p v-if="errors.firstName" class="error-text">{{ errors.firstName }}</p>
 
-      <input type="text" v-model="lastName" placeholder="Last Name" class="input-field" />
-      <p v-if="errors.lastName" class="error-text">{{ errors.lastName }}</p>
-
+    <!-- Form Fields -->
+    <form @submit.prevent="loginUser" class="login-form">
       <input type="email" v-model="email" placeholder="Email" class="input-field" />
       <p v-if="errors.email" class="error-text">{{ errors.email }}</p>
 
       <input type="password" v-model="password" placeholder="Password" class="input-field" />
       <p v-if="errors.password" class="error-text">{{ errors.password }}</p>
 
-      <label class="file-upload-label">
-        Profile Picture
-        <input type="file" @change="handleProfilePicture" class="input-field" accept="image/*" />
-      </label>
-      <p v-if="profilePicture">{{ profilePicture.name }}</p>
-
-      <button type="submit" class="signup-button">Create Account</button>
+      <button type="submit" class="login-button">Login</button>
     </form>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'SignUp',
+  name: 'LoginPage',
   data() {
     return {
-      firstName: '',
-      lastName: '',
       email: '',
       password: '',
-      profilePicture: null,
       errors: {}, // Store validation errors
     };
   },
   methods: {
-    handleProfilePicture(event) {
-      this.profilePicture = event.target.files[0]; // Get the selected file
-    },
     validateForm() {
       this.errors = {};
 
-      if (!this.firstName.trim()) {
-        this.errors.firstName = 'First name is required';
-      }
-      if (!this.lastName.trim()) {
-        this.errors.lastName = 'Last name is required';
-      }
       if (!this.email.trim() || !this.email.includes('@')) {
         this.errors.email = 'Valid email is required';
       }
@@ -66,24 +45,19 @@ export default {
 
       return Object.keys(this.errors).length === 0;
     },
-    registerUser() {
+    loginUser() {
       if (!this.validateForm()) {
         alert('Please correct the errors in the form.');
         return;
       }
 
-      const formData = {
-        firstName: this.firstName,
-        lastName: this.lastName,
+      console.log('Logging in user:', {
         email: this.email,
         password: this.password,
-        profilePicture: this.profilePicture ? this.profilePicture.name : 'No file selected',
-      };
-
-      console.log('Registering user:', formData);
+      });
 
       // Placeholder for backend connection
-      alert('Account created successfully!');
+      alert('Logged in successfully!');
     },
   },
 };
@@ -94,7 +68,7 @@ export default {
   font-family: 'gg sans', sans-serif;
 }
 
-.signup-card {
+.login-card {
   width: 100%;
   max-width: 400px;
   padding: 20px;
@@ -127,14 +101,14 @@ export default {
   margin-bottom: 20px;
 }
 
-.login-link {
+.signup-link {
   color: #5865f2;
   font-weight: bold;
   text-decoration: underline;
   cursor: pointer;
 }
 
-.login-link:hover {
+.signup-link:hover {
   color: #4752c4;
 }
 
@@ -154,12 +128,6 @@ export default {
   color: #666666;
 }
 
-.file-upload-label {
-  text-align: left;
-  font-size: 14px;
-  color: #f2f3f5;
-}
-
 .error-text {
   color: #ff4d4f; /* Red color for error text */
   font-size: 14px;
@@ -168,7 +136,7 @@ export default {
   text-align: left;
 }
 
-.signup-button {
+.login-button {
   width: 100%;
   padding: 12px 16px;
   background-color: #5865f2;
@@ -180,7 +148,7 @@ export default {
   cursor: pointer;
 }
 
-.signup-button:hover {
+.login-button:hover {
   background-color: #4752c4;
 }
 </style>
