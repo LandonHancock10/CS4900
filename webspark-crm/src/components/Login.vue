@@ -23,6 +23,8 @@
 </template>
 
 <script>
+import { loginUser } from '@/services/dynamoService'; // Import the login function
+
 export default {
   name: 'LoginPage',
   data() {
@@ -35,29 +37,37 @@ export default {
   methods: {
     validateForm() {
       this.errors = {};
-
       if (!this.email.trim() || !this.email.includes('@')) {
         this.errors.email = 'Valid email is required';
       }
       if (this.password.length < 6) {
         this.errors.password = 'Password must be at least 6 characters long';
       }
-
       return Object.keys(this.errors).length === 0;
     },
-    loginUser() {
+    async loginUser() {
       if (!this.validateForm()) {
         alert('Please correct the errors in the form.');
         return;
       }
 
-      console.log('Logging in user:', {
-        email: this.email,
-        password: this.password,
-      });
+      try {
+        const response = await loginUser(this.email, this.password); // Call loginUser function
+        if (response.success) {
+          console.log('Logged in user:', response.user);
 
-      // Placeholder for backend connection
-      alert('Logged in successfully!');
+          // Store user data in localStorage
+          localStorage.setItem('user', JSON.stringify(response.user));
+
+          // Redirect to the communicate page
+          this.$router.push('/communicate');
+        } else {
+          alert(response.message); // Show message if login fails
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred while logging in.');
+      }
     },
   },
 };
