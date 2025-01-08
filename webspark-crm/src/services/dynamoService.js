@@ -2,6 +2,7 @@
 import AWS from 'aws-sdk';
 import bcrypt from 'bcryptjs'; // Import bcrypt for hashing
 import { v4 as uuidv4 } from 'uuid'; // For generating unique userId
+VUE_APP_AWS_REGION=us-west-1
 
 // Configure AWS
 AWS.config.update({
