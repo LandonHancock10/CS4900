@@ -102,7 +102,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "serverless-framework-deployments-us-west-2-70349657-47a4",
-          "S3Key": "serverless/webspark-crm-api/dev/1739855724221-2025-02-18T05:15:24.221Z/webspark-crm-api.zip"
+          "S3Key": "serverless/webspark-crm-api/dev/1739856185249-2025-02-18T05:23:05.249Z/webspark-crm-api.zip"
         },
         "Handler": "server.handler",
         "Runtime": "nodejs18.x",
@@ -125,14 +125,14 @@
         "ApiLogGroup"
       ]
     },
-    "ApiLambdaVersionaxbSFEXMbbWqNhPYpJdYjV29X04Q3Yk3j6uUDFxCw": {
+    "ApiLambdaVersion2rZMkMGWOcc9LYFjkZT0PlaLS82eyR9ae2yqgcIkXnE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "ApiLambdaFunction"
         },
-        "CodeSha256": "2eQhW46vuRr0QCZ6ca89Rura5mNGz7EFlMqhzN1Xz+Y="
+        "CodeSha256": "hHq86sLwwa1HcyJ8y41/3grDcJGDKLVxE/UuW+RsR/c="
       }
     },
     "ApiGatewayRestApi": {
@@ -145,6 +145,36 @@
           ]
         },
         "Policy": ""
+      }
+    },
+    "ApiGatewayResourceSignup": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "signup",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceLogin": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "login",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
       }
     },
     "ApiGatewayResourceProxyVar": {
@@ -161,6 +191,98 @@
           "Ref": "ApiGatewayRestApi"
         }
       }
+    },
+    "ApiGatewayMethodSignupPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceSignup"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ApiLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "ApiLambdaPermissionApiGateway"
+      ]
+    },
+    "ApiGatewayMethodLoginPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceLogin"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ApiLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "ApiLambdaPermissionApiGateway"
+      ]
     },
     "ApiGatewayMethodAny": {
       "Type": "AWS::ApiGateway::Method",
@@ -257,7 +379,7 @@
         "ApiLambdaPermissionApiGateway"
       ]
     },
-    "ApiGatewayDeployment1739855714854": {
+    "ApiGatewayDeployment1739856176041": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -266,6 +388,8 @@
         "StageName": "dev"
       },
       "DependsOn": [
+        "ApiGatewayMethodSignupPost",
+        "ApiGatewayMethodLoginPost",
         "ApiGatewayMethodAny",
         "ApiGatewayMethodProxyVarAny"
       ]
@@ -318,7 +442,7 @@
     "ApiLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ApiLambdaVersionaxbSFEXMbbWqNhPYpJdYjV29X04Q3Yk3j6uUDFxCw"
+        "Ref": "ApiLambdaVersion2rZMkMGWOcc9LYFjkZT0PlaLS82eyR9ae2yqgcIkXnE"
       },
       "Export": {
         "Name": "sls-webspark-crm-api-dev-ApiLambdaFunctionQualifiedArn"
