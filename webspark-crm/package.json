@@ -10,6 +10,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.724.0",
     "aws-sdk": "^2.1692.0",
+    "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
     "core-js": "^3.8.3",
     "uuid": "^11.0.4",
