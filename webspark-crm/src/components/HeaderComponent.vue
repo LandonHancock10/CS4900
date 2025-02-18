@@ -41,6 +41,7 @@
     display: flex;
     align-items: center; /* Vertically center content */
     justify-content: center;
+    z-index: 100000;
   }
   
   /* Flex container for the logo, profile picture, and menu */
