@@ -102,7 +102,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "serverless-framework-deployments-us-west-2-70349657-47a4",
-          "S3Key": "serverless/webspark-crm-api/dev/1739851874867-2025-02-18T04:11:14.867Z/webspark-crm-api.zip"
+          "S3Key": "serverless/webspark-crm-api/dev/1739854018510-2025-02-18T04:46:58.510Z/webspark-crm-api.zip"
         },
         "Handler": "server.handler",
         "Runtime": "nodejs18.x",
@@ -125,14 +125,14 @@
         "ApiLogGroup"
       ]
     },
-    "ApiLambdaVersiongUNQAv6PgmrzS4TodNpp1qCLJJt48P4ZGvGYSt6c": {
+    "ApiLambdaVersionHjCSHsE1a1zssbBCTSfOgFplgOc0nm1Mfk3tevvzu4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "ApiLambdaFunction"
         },
-        "CodeSha256": "E3/KfPCHe0AGxzEVRn6h7teCG9b5u405DV6hZ8rsBIc="
+        "CodeSha256": "ncV+6NMBfBWZNJ2uQHXVahFkGKvBiAhGDIiRnUYsS0E="
       }
     },
     "ApiGatewayRestApi": {
@@ -257,7 +257,7 @@
         "ApiLambdaPermissionApiGateway"
       ]
     },
-    "ApiGatewayDeployment1739851860144": {
+    "ApiGatewayDeployment1739854013303": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -318,7 +318,7 @@
     "ApiLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ApiLambdaVersiongUNQAv6PgmrzS4TodNpp1qCLJJt48P4ZGvGYSt6c"
+        "Ref": "ApiLambdaVersionHjCSHsE1a1zssbBCTSfOgFplgOc0nm1Mfk3tevvzu4"
       },
       "Export": {
         "Name": "sls-webspark-crm-api-dev-ApiLambdaFunctionQualifiedArn"

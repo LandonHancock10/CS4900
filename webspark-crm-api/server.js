@@ -3,30 +3,47 @@ const AWS = require("aws-sdk");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const serverless = require("serverless-http");
+const cors = require("cors");
+const { v4: uuidv4 } = require("uuid");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
+
+// ✅ Enable CORS globally
+app.use(cors({ origin: "*" }));
+
+// ✅ Handle CORS preflight requests for all routes
+app.options("*", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.status(200).end();
+});
 
 // AWS DynamoDB Config
 AWS.config.update({ region: process.env.AWS_REGION || "us-west-2" });
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const TABLE_NAME = "Users";
 
-// Generate JWT Token
+// ✅ JWT Token Generator
 const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-// Signup Endpoint
+// ✅ Signup Endpoint
 app.post("/signup", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
     const { email, password, firstName, lastName } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const params = {
-        TableName: TABLE_NAME,
-        Item: { userId: AWS.util.uuid.v4(), email, passwordHash: hashedPassword, firstName, lastName },
-    };
-
     try {
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const params = {
+            TableName: TABLE_NAME,
+            Item: { userId: uuidv4(), email, passwordHash: hashedPassword, firstName, lastName },
+        };
+
         await dynamoDB.put(params).promise();
         res.json({ success: true, message: "User created successfully!" });
     } catch (error) {
@@ -34,8 +51,10 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-// Login Endpoint
+// ✅ Login Endpoint
 app.post("/login", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
     const { email, password } = req.body;
     const params = {
         TableName: TABLE_NAME,
@@ -58,5 +77,5 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Export for AWS Lambda
+// ✅ Export for AWS Lambda
 module.exports.handler = serverless(app);
