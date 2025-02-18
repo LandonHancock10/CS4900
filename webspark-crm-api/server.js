@@ -33,7 +33,7 @@ const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, {
 app.post("/signup", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    const { email, password, firstName, lastName } = req.body;
+    const { email, password, firstName, lastName, profilePicture } = req.body;
 
     // ✅ Validate request body
     if (!email || !password || !firstName || !lastName) {
@@ -41,23 +41,23 @@ app.post("/signup", async (req, res) => {
     }
 
     try {
-        if (typeof password !== "string" || password.trim() === "") {
-            throw new Error("Invalid password format.");
+        // ✅ Ensure password is a string
+        if (typeof password !== "string") {
+            throw new Error("Password must be a string.");
         }
 
-        // ✅ Hash the password
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // ✅ Save user in DynamoDB
         const params = {
             TableName: TABLE_NAME,
-            Item: { 
-                userId: uuidv4(), 
-                email, 
-                passwordHash: hashedPassword, 
-                firstName, 
-                lastName 
+            Item: {
+                userId: uuidv4(),
+                email,
+                passwordHash: hashedPassword,
+                firstName,
+                lastName,
+                profilePicture: profilePicture || null, // Make profile picture optional
             },
         };
 
@@ -80,25 +80,19 @@ app.post("/login", async (req, res) => {
         return res.status(400).json({ success: false, message: "Missing email or password." });
     }
 
-    // ✅ Query user from DynamoDB
     const params = {
         TableName: TABLE_NAME,
-        FilterExpression: "email = :email",
+        IndexName: "email-index", // Ensure this index exists in DynamoDB
+        KeyConditionExpression: "email = :email",
         ExpressionAttributeValues: { ":email": email },
     };
 
     try {
-        const data = await dynamoDB.scan(params).promise();
-        if (!data.Items || data.Items.length === 0) {
-            return res.status(401).json({ success: false, message: "User not found." });
-        }
+        const data = await dynamoDB.query(params).promise();
+        const user = data.Items.length > 0 ? data.Items[0] : null;
 
-        const user = data.Items[0];
-
-        // ✅ Compare passwords
-        const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-        if (!isPasswordValid) {
-            return res.status(401).json({ success: false, message: "Invalid credentials." });
+        if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
         res.json({ success: true, token: generateToken(user.userId) });
@@ -108,4 +102,5 @@ app.post("/login", async (req, res) => {
     }
 });
 
+// ✅ Export for AWS Lambda
 module.exports.handler = serverless(app);

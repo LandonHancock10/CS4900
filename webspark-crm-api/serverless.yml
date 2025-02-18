@@ -1,9 +1,5 @@
 service: webspark-crm-api
 
-package:
-  include:
-    - node_modules/**
-
 provider:
   name: aws
   runtime: nodejs18.x
@@ -24,5 +20,27 @@ functions:
   api:
     handler: server.handler
     events:
-      - http: ANY /
-      - http: ANY {proxy+}
+      - http:
+          path: signup
+          method: post
+      - http:
+          path: login
+          method: post
+      - http:
+          path: /
+          method: any
+      - http:
+          path: "{proxy+}"
+          method: any
+
+package:
+  exclude:
+    - node_modules/**
+  include:
+    - node_modules/express/**
+    - node_modules/serverless-http/**
+    - node_modules/body-parser/**
+    - node_modules/aws-sdk/**
+    - node_modules/bcryptjs/**
+    - node_modules/jsonwebtoken/**
+    - node_modules/uuid/**
