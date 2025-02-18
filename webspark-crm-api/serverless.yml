@@ -34,9 +34,8 @@ functions:
           method: any
 
 package:
-  exclude:
-    - node_modules/**
   include:
+    - node_modules/**
     - node_modules/express/**
     - node_modules/serverless-http/**
     - node_modules/body-parser/**

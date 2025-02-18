@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://zijwv62dng.execute-api.us-west-2.amazonaws.com/dev"; // Replace with your actual API Gateway URL
+const API_URL = "https://vksxvoy6dk.execute-api.us-west-2.amazonaws.com/dev";
 
 // ** Create User Function **
 export const createUser = async (user) => {
