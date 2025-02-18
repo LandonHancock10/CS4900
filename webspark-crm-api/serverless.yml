@@ -1,23 +1,15 @@
 service: webspark-crm-api
 
 package:
-  excludeDevDependencies: false
-  patterns:
-    - 'node_modules/**'    # Ensure all node modules are included
-    - '!node_modules/.bin/**'  # Exclude unnecessary binaries
-    - 'server.js'
-    - 'package.json'
-    - 'package-lock.json'
+  include:
+    - node_modules/**
 
 provider:
   name: aws
   runtime: nodejs18.x
   region: us-west-2
-  memorySize: 1024  # Increase if needed
-  timeout: 10  # Increase timeout to prevent premature function failures
   environment:
     JWT_SECRET: "your-secret-key"
-    AWS_REGION: us-west-2
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -26,7 +18,7 @@ provider:
         - "dynamodb:PutItem"
         - "dynamodb:UpdateItem"
         - "dynamodb:DeleteItem"
-      Resource: "*"  # Consider using a specific ARN instead of '*'
+      Resource: "*"
 
 functions:
   api:
@@ -34,10 +26,3 @@ functions:
     events:
       - http: ANY /
       - http: ANY {proxy+}
-
-plugins:
-  - serverless-offline  # Useful for local testing
-
-custom:
-  serverless-offline:
-    httpPort: 3000

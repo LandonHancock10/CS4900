@@ -122,7 +122,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-us-west-2-70349657-47a4",
-                "S3Key": "serverless/webspark-crm-api/dev/1739854018510-2025-02-18T04:46:58.510Z/webspark-crm-api.zip"
+                "S3Key": "serverless/webspark-crm-api/dev/1739855724221-2025-02-18T05:15:24.221Z/webspark-crm-api.zip"
               },
               "Handler": "server.handler",
               "Runtime": "nodejs18.x",
@@ -145,14 +145,14 @@
               "ApiLogGroup"
             ]
           },
-          "ApiLambdaVersionHjCSHsE1a1zssbBCTSfOgFplgOc0nm1Mfk3tevvzu4": {
+          "ApiLambdaVersionaxbSFEXMbbWqNhPYpJdYjV29X04Q3Yk3j6uUDFxCw": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "ncV+6NMBfBWZNJ2uQHXVahFkGKvBiAhGDIiRnUYsS0E="
+              "CodeSha256": "2eQhW46vuRr0QCZ6ca89Rura5mNGz7EFlMqhzN1Xz+Y="
             }
           },
           "ApiGatewayRestApi": {
@@ -277,7 +277,7 @@
               "ApiLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1739854013303": {
+          "ApiGatewayDeployment1739855714854": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -338,7 +338,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersionHjCSHsE1a1zssbBCTSfOgFplgOc0nm1Mfk3tevvzu4"
+              "Ref": "ApiLambdaVersionaxbSFEXMbbWqNhPYpJdYjV29X04Q3Yk3j6uUDFxCw"
             },
             "Export": {
               "Name": "sls-webspark-crm-api-dev-ApiLambdaFunctionQualifiedArn"
@@ -392,7 +392,7 @@
         "timeout": 6,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ApiLambdaVersionHjCSHsE1a1zssbBCTSfOgFplgOc0nm1Mfk3tevvzu4"
+        "versionLogicalId": "ApiLambdaVersionaxbSFEXMbbWqNhPYpJdYjV29X04Q3Yk3j6uUDFxCw"
       }
     },
     "configValidationMode": "warn",
@@ -400,17 +400,13 @@
     "initialServerlessConfig": {
       "service": "webspark-crm-api",
       "package": {
-        "exclude": [
-          "node_modules/**"
-        ],
         "include": [
-          "node_modules/express/**",
-          "node_modules/serverless-http/**"
+          "node_modules/**"
         ],
         "artifactsS3KeyDirname": "serverless/webspark-crm-api/dev/code-artifacts",
         "deploymentBucket": "serverless-framework-deployments-us-west-2-70349657-47a4",
         "artifact": "/workspaces/CS4900/webspark-crm-api/.serverless/webspark-crm-api.zip",
-        "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739854018510-2025-02-18T04:46:58.510Z"
+        "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739855724221-2025-02-18T05:15:24.221Z"
       },
       "provider": {
         "$ref": "$[\"service\"][\"provider\"]"
@@ -425,7 +421,7 @@
     "artifact": "/workspaces/CS4900/webspark-crm-api/.serverless/webspark-crm-api.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739854018510-2025-02-18T04:46:58.510Z",
+    "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739855724221-2025-02-18T05:15:24.221Z",
     "artifact": "webspark-crm-api.zip"
   }
 }
