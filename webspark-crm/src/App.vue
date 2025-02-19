@@ -12,6 +12,9 @@ export default {
 </script>
 
 <style>
+body {
+  overflow: hidden;
+}
 /* Font Face Definitions */
 @font-face {
   font-family: 'gg sans';

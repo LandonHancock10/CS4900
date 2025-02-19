@@ -127,7 +127,7 @@ export default {
       message: "",
       selectedChannel: "text",
       messages: {
-        text: [],
+        text: [{ sender: "System", text: "No new texts yet." }],
         email: [{ sender: "System", text: "No new emails yet." }],
         call: [{ sender: "System", text: "Call history is empty." }],
         tasks: [{ sender: "Project Manager", text: "Remember to finalize the design!" }],

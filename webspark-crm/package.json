@@ -5,10 +5,11 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "seed": "node scripts/seedDatabase.js"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.724.0",
+    "@aws-sdk/client-dynamodb": "^3.751.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
