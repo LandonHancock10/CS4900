@@ -6,7 +6,8 @@
       <!-- Left Sidebar: Search & Contacts -->
       <div class="left-sidebar">
         <input type="text" placeholder="Search" class="search-bar" />
-        <button class="add-new">+ Add New</button>
+        <button class="add-new" @click="openModal">+ Add New</button>
+
         <div class="contacts">
           <div class="contact" v-for="contact in contacts" :key="contact.id">
             <img :src="contact.avatar" alt="Avatar" class="contact-avatar" />
@@ -60,10 +61,42 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL FOR ADDING CONTACT -->
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal">
+        <h2>Add a New Contact</h2>
+        <form @submit.prevent="saveContact">
+          <div class="form-group">
+            <label>Profile Picture</label>
+            <input type="file" @change="uploadImage" />
+          </div>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" v-model="newContact.name" required />
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" v-model="newContact.address" required />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" v-model="newContact.phone" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" v-model="newContact.email" required />
+          </div>
+          <button type="submit">Create</button>
+          <button type="button" @click="closeModal">Cancel</button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
 import HeaderComponent from "@/components/HeaderComponent.vue";
 
 export default {
@@ -73,21 +106,24 @@ export default {
   },
   data() {
     return {
-      contacts: [
-        { id: 1, name: "Sean Foster", avatar: require('@/assets/user.png') },
-        { id: 2, name: "Jane Doe", avatar: require('@/assets/user.png') },
-      ],
+      showModal: false, // Controls modal visibility
+      contacts: [], // Empty initially, will be fetched from DB
       team: [
         { id: 1, name: "Sean Foster", avatar: require('@/assets/user.png') },
         { id: 2, name: "Jane Doe", avatar: require('@/assets/user.png') },
       ],
+      newContact: {
+        name: "",
+        address: "",
+        companyName: "",
+        phone: "",
+        email: "",
+        profilePicture: null,
+      },
       message: "",
       selectedChannel: "text",
       messages: {
-        text: [
-          { sender: "Sean Foster", text: "Hey there!" },
-          { sender: "Jane Doe", text: "How’s the project going?" },
-        ],
+        text: [],
         email: [{ sender: "System", text: "No new emails yet." }],
         call: [{ sender: "System", text: "Call history is empty." }],
         tasks: [{ sender: "Project Manager", text: "Remember to finalize the design!" }],
@@ -102,6 +138,59 @@ export default {
     },
   },
   methods: {
+    async fetchContacts() {
+      try {
+        const response = await axios.get("https://your-api-url/customers");
+        this.contacts = response.data.customers || [];
+      } catch (error) {
+        console.error("Error fetching contacts:", error);
+      }
+    },
+    openModal() {
+      this.showModal = true;
+    },
+    closeModal() {
+      this.showModal = false;
+      this.resetContactForm();
+    },
+    async saveContact() {
+      try {
+        console.log("Saving contact:", this.newContact);
+
+        if (!this.newContact.name || !this.newContact.phone || !this.newContact.email) {
+          alert("Please fill in all required fields.");
+          return;
+        }
+
+        // Send data to the backend
+        const response = await axios.post("https://your-api-url/customers", this.newContact);
+
+        if (response.data.success) {
+          // Add the new customer to the local list for UI updates
+          this.contacts.push(response.data.customer);
+          this.showModal = false;
+          this.resetContactForm();
+        } else {
+          console.error("Failed to add customer:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error saving customer:", error);
+      }
+    },
+    uploadImage(event) {
+      const file = event.target.files[0];
+      this.newContact.profilePicture = file;
+    },
+    resetContactForm() {
+      this.newContact = {
+        name: "",
+        address: "",
+        companyName: "",
+        phone: "",
+        email: "",
+        profilePicture: null,
+      };
+    },
     sendMessage() {
       if (this.message.trim()) {
         this.messages[this.selectedChannel].push({ sender: "You", text: this.message });
@@ -111,6 +200,9 @@ export default {
     selectChannel(channel) {
       this.selectedChannel = channel;
     },
+  },
+  mounted() {
+    this.fetchContacts(); // Fetch contacts from the database when the component loads
   },
 };
 </script>
@@ -273,5 +365,101 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+}
+
+/* Modal Overlay - Ensures it's centered and darkens the background */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* Dark overlay for better focus */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Ensure it appears above all other elements */
+}
+
+/* Modal Box */
+.modal {
+  background: #1E1F22; /* Matches left sidebar */
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  color: white;
+}
+
+/* Modal Heading */
+.modal h2 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  text-align: center;
+  color: #F2F3F5;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Input Fields */
+.modal input {
+  padding: 0px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: 4px;
+  border: none;
+  background-color: #2B2D31;
+  color: white;
+  outline: none;
+  width: 100%;
+}
+
+/* File Input */
+.modal input[type="file"] {
+  background-color: transparent;
+}
+
+/* Buttons */
+.modal button {
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: 0.2s ease-in-out;
+}
+
+/* Create Button */
+.modal button[type="submit"] {
+  background-color: #5865F2;
+  color: white;
+}
+
+.modal button[type="submit"]:hover {
+  background-color: #4752C4;
+}
+
+/* Cancel Button */
+.modal button[type="button"] {
+  background-color: #3C3F44;
+  color: #F2F3F5;
+}
+
+.modal button[type="button"]:hover {
+  background-color: #4A4D54;
+}
+
+/* Ensure Buttons Are Full Width */
+.modal button {
+  width: 100%;
 }
 </style>
