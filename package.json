@@ -1,4 +1,15 @@
 {
+  "name": "webspark-crm",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "test": "vitest --run",
+    "test:unit": "vitest --run tests/unit",
+    "deploy": "yarn build && aws s3 sync dist s3://your-s3-bucket-name --delete"
+  },
   "dependencies": {
     "aws-sdk": "^2.1692.0",
     "bcryptjs": "^3.0.1",
@@ -16,12 +27,14 @@
     "@babel/preset-react": "^7.26.3",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitest/ui": "^3.0.6",
+    "@vue/cli-service": "^5.0.8",
     "@vue/compiler-sfc": "^3.5.13",
     "aws-sdk-mock": "^6.2.1",
     "babel-loader": "^9.2.1",
     "cypress": "^14.0.3",
     "jest-environment-jsdom": "^26.6.2",
     "jsdom": "^26.0.0",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "vue-template-compiler": "^2.7.16"
   }
 }
