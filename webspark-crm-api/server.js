@@ -9,7 +9,6 @@ require("dotenv").config();
 
 const app = express();
 
-// Ensure API Gateway's request body is parsed correctly
 app.use(express.json());
 app.use(cors({ origin: "*" }));
 
@@ -20,14 +19,15 @@ app.options("*", (req, res) => {
   res.status(200).end();
 });
 
-// AWS DynamoDB Setup
+// AWS Configuration
 AWS.config.update({ region: process.env.AWS_REGION || "us-west-2" });
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const USERS_TABLE = "Users";
-const CUSTOMERS_TABLE = "Customers"; // New Customers Table
+const CUSTOMERS_TABLE = "Customers"; // Ensure it's defined before routes
 
 // Generate JWT token
-const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "1h" });
+const generateToken = (userId) =>
+  jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
 // Middleware to parse request body from AWS Lambda
 const parseLambdaEventBody = (req, res, next) => {
@@ -38,7 +38,9 @@ const parseLambdaEventBody = (req, res, next) => {
       req.body = JSON.parse(req.body);
     }
   } catch (error) {
-    return res.status(400).json({ success: false, message: "Invalid request body format." });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid request body format." });
   }
   next();
 };
@@ -48,12 +50,22 @@ const parseLambdaEventBody = (req, res, next) => {
 app.post("/signup", parseLambdaEventBody, async (req, res) => {
   try {
     console.log("Incoming /signup request body:", req.body);
+
     const { email, password, firstName, lastName, profilePicture } = req.body;
 
     if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ success: false, message: "All fields are required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required." });
     }
 
+    if (typeof password !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Password must be a string." });
+    }
+
+    // **Hash the password correctly**
     const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
 
     const params = {
@@ -80,10 +92,13 @@ app.post("/signup", parseLambdaEventBody, async (req, res) => {
 app.post("/login", parseLambdaEventBody, async (req, res) => {
   try {
     console.log("Incoming /login request body:", req.body);
+
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Missing email or password." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing email or password." });
     }
 
     const params = {
@@ -108,84 +123,59 @@ app.post("/login", parseLambdaEventBody, async (req, res) => {
 });
 
 /* =================== CUSTOMER MANAGEMENT ROUTES =================== */
-// **Create a New Customer**
-app.post("/customers", async (req, res) => {
+// **Add a Customer Route**
+app.post("/customers", parseLambdaEventBody, async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
   try {
+    console.log("Incoming /customers request body:", req.body);
     const { name, address, companyName, email, phone } = req.body;
 
     if (!name || !email || !phone) {
-      return res.status(400).json({ success: false, message: "Name, email, and phone are required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Name, email, and phone are required." });
     }
 
     const customerId = uuidv4();
-
-    const newCustomer = {
-      customerId,
-      name,
-      address: address || "N/A",
-      companyName: companyName || "N/A",
-      email,
-      phone,
-      createdAt: new Date().toISOString(),
-    };
-
     const params = {
       TableName: CUSTOMERS_TABLE,
-      Item: newCustomer,
+      Item: {
+        customerId,
+        name,
+        address: address || "N/A",
+        companyName: companyName || "N/A",
+        email,
+        phone,
+        createdAt: new Date().toISOString(),
+      },
     };
 
     await dynamoDB.put(params).promise();
-
-    res.json({ success: true, message: "Customer added successfully", customer: newCustomer });
+    res.json({ success: true, message: "Customer added successfully!", customer: params.Item });
   } catch (error) {
     console.error("Error adding customer:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// **Retrieve Customer Info by ID**
-app.get("/customers/:customerId", async (req, res) => {
-  try {
-    const { customerId } = req.params;
+// **Retrieve all customers**
+app.get("/customers", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
+  try {
     const params = {
       TableName: CUSTOMERS_TABLE,
-      Key: { customerId },
-    };
-
-    const result = await dynamoDB.get(params).promise();
-
-    if (!result.Item) {
-      return res.status(404).json({ success: false, message: "Customer not found" });
-    }
-
-    res.json({ success: true, customer: result.Item });
-  } catch (error) {
-    console.error("Error retrieving customer:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// **Search Customers by Name, Company, or Address**
-app.get("/customers/search", async (req, res) => {
-  try {
-    const { query } = req.query;
-
-    if (!query) {
-      return res.status(400).json({ success: false, message: "Search query required" });
-    }
-
-    const params = {
-      TableName: CUSTOMERS_TABLE,
-      FilterExpression: "contains(name, :query) OR contains(companyName, :query) OR contains(address, :query)",
-      ExpressionAttributeValues: { ":query": query },
     };
 
     const result = await dynamoDB.scan(params).promise();
-
     res.json({ success: true, customers: result.Items });
   } catch (error) {
-    console.error("Error searching customers:", error);
+    console.error("Error retrieving customers:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });

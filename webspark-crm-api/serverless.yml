@@ -27,11 +27,11 @@ functions:
           path: login
           method: post
       - http:
-          path: /
-          method: any
+          path: customers
+          method: get
       - http:
-          path: "{proxy+}"
-          method: any
+          path: customers
+          method: post
 
 package:
   include:

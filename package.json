@@ -8,5 +8,15 @@
     "jsonwebtoken": "^9.0.2",
     "serverless-http": "^3.2.0",
     "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vitest/ui": "^3.0.6",
+    "@vue/compiler-sfc": "^3.5.13",
+    "aws-sdk-mock": "^6.2.1",
+    "cypress": "^14.0.3",
+    "jest-environment-jsdom": "^26.6.2",
+    "jsdom": "^26.0.0",
+    "supertest": "^7.0.0"
   }
 }

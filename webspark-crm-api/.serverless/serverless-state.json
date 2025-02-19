@@ -122,7 +122,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-us-west-2-70349657-47a4",
-                "S3Key": "serverless/webspark-crm-api/dev/1739985261309-2025-02-19T17:14:21.309Z/webspark-crm-api.zip"
+                "S3Key": "serverless/webspark-crm-api/dev/1739992303741-2025-02-19T19:11:43.741Z/webspark-crm-api.zip"
               },
               "Handler": "server.handler",
               "Runtime": "nodejs18.x",
@@ -145,14 +145,14 @@
               "ApiLogGroup"
             ]
           },
-          "ApiLambdaVersiona4DMSuQuX5En6lVhxp6BJzAYqn8TDLXm3MAcQA9w7s": {
+          "ApiLambdaVersionTvIvlLIbL67XW161FYco02zf94YshEJSXkUkTYLPME": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "DmQF5M5jbHx8mNrNRtCCtiMmVhijgmIPSuCXL4Y0D+g="
+              "CodeSha256": "GYF0GMm/eGxaMZ3KPt3yHDpQXVIzh0dAykIFCki+GtU="
             }
           },
           "ApiGatewayRestApi": {
@@ -197,7 +197,7 @@
               }
             }
           },
-          "ApiGatewayResourceProxyVar": {
+          "ApiGatewayResourceCustomers": {
             "Type": "AWS::ApiGateway::Resource",
             "Properties": {
               "ParentId": {
@@ -206,7 +206,7 @@
                   "RootResourceId"
                 ]
               },
-              "PathPart": "{proxy+}",
+              "PathPart": "customers",
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -304,16 +304,13 @@
               "ApiLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayMethodAny": {
+          "ApiGatewayMethodCustomersGet": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
-              "HttpMethod": "ANY",
+              "HttpMethod": "GET",
               "RequestParameters": {},
               "ResourceId": {
-                "Fn::GetAtt": [
-                  "ApiGatewayRestApi",
-                  "RootResourceId"
-                ]
+                "Ref": "ApiGatewayResourceCustomers"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -353,13 +350,13 @@
               "ApiLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayMethodProxyVarAny": {
+          "ApiGatewayMethodCustomersPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
-              "HttpMethod": "ANY",
+              "HttpMethod": "POST",
               "RequestParameters": {},
               "ResourceId": {
-                "Ref": "ApiGatewayResourceProxyVar"
+                "Ref": "ApiGatewayResourceCustomers"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -399,7 +396,7 @@
               "ApiLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1739985247455": {
+          "ApiGatewayDeployment1739992295455": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -410,8 +407,8 @@
             "DependsOn": [
               "ApiGatewayMethodSignupPost",
               "ApiGatewayMethodLoginPost",
-              "ApiGatewayMethodAny",
-              "ApiGatewayMethodProxyVarAny"
+              "ApiGatewayMethodCustomersGet",
+              "ApiGatewayMethodCustomersPost"
             ]
           },
           "ApiLambdaPermissionApiGateway": {
@@ -462,7 +459,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersiona4DMSuQuX5En6lVhxp6BJzAYqn8TDLXm3MAcQA9w7s"
+              "Ref": "ApiLambdaVersionTvIvlLIbL67XW161FYco02zf94YshEJSXkUkTYLPME"
             },
             "Export": {
               "Name": "sls-webspark-crm-api-dev-ApiLambdaFunctionQualifiedArn"
@@ -519,15 +516,15 @@
           },
           {
             "http": {
-              "path": "",
-              "method": "any",
+              "path": "customers",
+              "method": "get",
               "integration": "AWS_PROXY"
             }
           },
           {
             "http": {
-              "path": "{proxy+}",
-              "method": "any",
+              "path": "customers",
+              "method": "post",
               "integration": "AWS_PROXY"
             }
           }
@@ -538,7 +535,7 @@
         "timeout": 6,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ApiLambdaVersiona4DMSuQuX5En6lVhxp6BJzAYqn8TDLXm3MAcQA9w7s"
+        "versionLogicalId": "ApiLambdaVersionTvIvlLIbL67XW161FYco02zf94YshEJSXkUkTYLPME"
       }
     },
     "configValidationMode": "warn",
@@ -565,7 +562,7 @@
         "artifactsS3KeyDirname": "serverless/webspark-crm-api/dev/code-artifacts",
         "deploymentBucket": "serverless-framework-deployments-us-west-2-70349657-47a4",
         "artifact": "/workspaces/CS4900/webspark-crm-api/.serverless/webspark-crm-api.zip",
-        "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739985261309-2025-02-19T17:14:21.309Z"
+        "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739992303741-2025-02-19T19:11:43.741Z"
       }
     },
     "appId": null,
@@ -574,7 +571,7 @@
     "artifact": "/workspaces/CS4900/webspark-crm-api/.serverless/webspark-crm-api.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739985261309-2025-02-19T17:14:21.309Z",
+    "artifactDirectoryName": "serverless/webspark-crm-api/dev/1739992303741-2025-02-19T19:11:43.741Z",
     "artifact": "webspark-crm-api.zip"
   }
 }

@@ -9,8 +9,8 @@
         <button class="add-new" @click="openModal">+ Add New</button>
 
         <div class="contacts">
-          <div class="contact" v-for="contact in contacts" :key="contact.id">
-            <img :src="contact.avatar" alt="Avatar" class="contact-avatar" />
+          <div class="contact" v-for="contact in contacts" :key="contact.customerId">
+            <img :src="contact.avatar || defaultAvatar" alt="Avatar" class="contact-avatar" />
             <span class="contact-name">{{ contact.name }}</span>
           </div>
         </div>
@@ -80,6 +80,10 @@
             <input type="text" v-model="newContact.address" required />
           </div>
           <div class="form-group">
+            <label>Company</label>
+            <input type="text" v-model="newContact.companyName" />
+          </div>
+          <div class="form-group">
             <label>Phone</label>
             <input type="text" v-model="newContact.phone" required />
           </div>
@@ -106,8 +110,8 @@ export default {
   },
   data() {
     return {
-      showModal: false, // Controls modal visibility
-      contacts: [], // Empty initially, will be fetched from DB
+      showModal: false,
+      contacts: [],
       team: [
         { id: 1, name: "Sean Foster", avatar: require('@/assets/user.png') },
         { id: 2, name: "Jane Doe", avatar: require('@/assets/user.png') },
@@ -130,6 +134,7 @@ export default {
         website: [{ sender: "Client", text: "Can we adjust the navbar styling?" }],
         social: [{ sender: "Marketing", text: "New campaign goes live tomorrow." }],
       },
+      defaultAvatar: require('@/assets/logo.png'), // Default avatar if no image is available
     };
   },
   computed: {
@@ -140,7 +145,11 @@ export default {
   methods: {
     async fetchContacts() {
       try {
-        const response = await axios.get("https://your-api-url/customers");
+        const token = localStorage.getItem("token");
+        const response = await axios.get("https://vksxvoy6dk.execute-api.us-west-2.amazonaws.com/dev/customers", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         this.contacts = response.data.customers || [];
       } catch (error) {
         console.error("Error fetching contacts:", error);
@@ -162,11 +171,12 @@ export default {
           return;
         }
 
-        // Send data to the backend
-        const response = await axios.post("https://your-api-url/customers", this.newContact);
+        const token = localStorage.getItem("token");
+        const response = await axios.post("https://vksxvoy6dk.execute-api.us-west-2.amazonaws.com/dev/customers", this.newContact, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (response.data.success) {
-          // Add the new customer to the local list for UI updates
           this.contacts.push(response.data.customer);
           this.showModal = false;
           this.resetContactForm();
@@ -202,10 +212,11 @@ export default {
     },
   },
   mounted() {
-    this.fetchContacts(); // Fetch contacts from the database when the component loads
+    this.fetchContacts();
   },
 };
 </script>
+
 
 <style scoped>
 /* Full-page container */
