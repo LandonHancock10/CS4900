@@ -1,0 +1,12 @@
+WebSpark CRM Development Journal
+I started this project to build a simple, easy-to-use customer relationship management (CRM) system, inspired by Discord’s layout but designed for businesses. At first, I explored different tech stacks to figure out the best tools to use. After testing a few options, I decided on AWS, using DynamoDB for the database, S3 for hosting the frontend, and API Gateway with Lambda to handle API requests.
+
+Once I picked the tech stack, I set up a Git repository with automatic deployment to S3. This made it easy to update the site—every change I pushed to the main branch would automatically go live.
+
+For the frontend, I chose Vue.js because it’s lightweight and flexible. On the backend, I built the API using Express.js and connected it to DynamoDB. This setup ensures that the CRM runs smoothly without needing a traditional server.
+
+One of the first big features I added was authentication. I created a login and signup system, storing user data in a Users table in DynamoDB. This made it possible for users to securely sign up and log in.
+
+After that, I started working on customer management features. I created a Customers table in DynamoDB to store names, addresses, company details, and other key information. I also built a frontend section where users can add, edit, and manage customer records. Next, I’ll improve search and filtering, so users can quickly find information inside the "Info" tab in the notes section.
+
+Looking ahead, I plan to expand the CRM by adding features for tracking messages, emails, and calls. These updates will make it a full-featured CRM, helping businesses manage customer interactions more effectively.
