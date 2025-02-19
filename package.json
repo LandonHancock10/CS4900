@@ -10,10 +10,14 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.9",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/preset-react": "^7.26.3",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitest/ui": "^3.0.6",
     "@vue/compiler-sfc": "^3.5.13",
     "aws-sdk-mock": "^6.2.1",
+    "babel-loader": "^9.2.1",
     "cypress": "^14.0.3",
     "jest-environment-jsdom": "^26.6.2",
     "jsdom": "^26.0.0",
