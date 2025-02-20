@@ -6,8 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "test": "vitest --run",
-    "test:unit": "vitest --run tests/unit",
+    "test": "jest --runInBand",
     "deploy": "yarn build && aws s3 sync dist s3://your-s3-bucket-name --delete"
   },
   "dependencies": {
