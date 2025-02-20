@@ -12,10 +12,6 @@ const docClient = DynamoDBDocumentClient.from(client, {
 
 const TABLE_NAME = "Users"; 
 
-// ========================
-// ✅ API-Based Functions
-// ========================
-
 // ** Create User Function (API) **
 export const createUser = async (user) => {
   try {
@@ -59,10 +55,6 @@ export const getAuthenticatedUser = () => {
   const token = localStorage.getItem("token");
   return token ? { isAuthenticated: true, token } : { isAuthenticated: false };
 };
-
-// ========================
-// ✅ DynamoDB-Based Functions
-// ========================
 
 // ** Fetch User from DynamoDB **
 export const getUserFromDB = async (userId) => {

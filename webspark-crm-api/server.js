@@ -1,17 +1,14 @@
-const express = require("express");
-const AWS = require("aws-sdk");
-const bcrypt = require("bcrypt-nodejs");
-const jwt = require("jsonwebtoken");
-const serverless = require("serverless-http");
-const cors = require("cors");
-const { v4: uuidv4 } = require("uuid");
-require("dotenv").config();
-
+import express from "express";
+import cors from "cors";
+import serverless from "serverless-http";
+import { parseLambdaEventBody, signupUser, loginUser, getUser } from "./src/services/userService.js";
+import * as customerService from "./src/services/customerService.js";
 const app = express();
 
 app.use(express.json());
 app.use(cors({ origin: "*" }));
 
+// CORS Preflight Handling
 app.options("*", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -19,69 +16,12 @@ app.options("*", (req, res) => {
   res.status(200).end();
 });
 
-// AWS Configuration
-AWS.config.update({ region: process.env.AWS_REGION || "us-west-2" });
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const USERS_TABLE = "Users";
-const CUSTOMERS_TABLE = "Customers"; // Ensure it's defined before routes
-
-// Generate JWT token
-const generateToken = (userId) =>
-  jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-// Middleware to parse request body from AWS Lambda
-const parseLambdaEventBody = (req, res, next) => {
-  try {
-    if (Buffer.isBuffer(req.body)) {
-      req.body = JSON.parse(req.body.toString("utf8"));
-    } else if (typeof req.body === "string") {
-      req.body = JSON.parse(req.body);
-    }
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Invalid request body format." });
-  }
-  next();
-};
-
-/* =================== USER AUTH ROUTES =================== */
 // **Signup Route**
 app.post("/signup", parseLambdaEventBody, async (req, res) => {
   try {
     console.log("Incoming /signup request body:", req.body);
-
-    const { email, password, firstName, lastName, profilePicture } = req.body;
-
-    if (!email || !password || !firstName || !lastName) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required." });
-    }
-
-    if (typeof password !== "string") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Password must be a string." });
-    }
-
-    // **Hash the password correctly**
-    const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
-
-    const params = {
-      TableName: USERS_TABLE,
-      Item: {
-        userId: uuidv4(),
-        email,
-        passwordHash: hashedPassword,
-        firstName,
-        lastName,
-        profilePicture: profilePicture || null,
-      },
-    };
-
-    await dynamoDB.put(params).promise();
-    res.json({ success: true, message: "User created successfully!" });
+    const result = await signupUser(req.body);
+    res.json(result);
   } catch (error) {
     console.error("Signup Error:", error);
     res.status(500).json({ success: false, error: error.message });
@@ -92,93 +32,49 @@ app.post("/signup", parseLambdaEventBody, async (req, res) => {
 app.post("/login", parseLambdaEventBody, async (req, res) => {
   try {
     console.log("Incoming /login request body:", req.body);
-
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing email or password." });
-    }
-
-    const params = {
-      TableName: USERS_TABLE,
-      IndexName: "email-index",
-      KeyConditionExpression: "email = :email",
-      ExpressionAttributeValues: { ":email": email },
-    };
-
-    const data = await dynamoDB.query(params).promise();
-    const user = data.Items.length > 0 ? data.Items[0] : null;
-
-    if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
-    }
-
-    res.json({ success: true, token: generateToken(user.userId) });
+    const result = await loginUser(req.body.email, req.body.password);
+    res.json(result);
   } catch (error) {
     console.error("Login Error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(401).json({ success: false, error: error.message });
   }
 });
 
-/* =================== CUSTOMER MANAGEMENT ROUTES =================== */
 // **Add a Customer Route**
 app.post("/customers", parseLambdaEventBody, async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
   try {
     console.log("Incoming /customers request body:", req.body);
-    const { name, address, companyName, email, phone } = req.body;
-
-    if (!name || !email || !phone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Name, email, and phone are required." });
-    }
-
-    const customerId = uuidv4();
-    const params = {
-      TableName: CUSTOMERS_TABLE,
-      Item: {
-        customerId,
-        name,
-        address: address || "N/A",
-        companyName: companyName || "N/A",
-        email,
-        phone,
-        createdAt: new Date().toISOString(),
-      },
-    };
-
-    await dynamoDB.put(params).promise();
-    res.json({ success: true, message: "Customer added successfully!", customer: params.Item });
+    const result = await createCustomer(req.body);
+    res.json(result);
   } catch (error) {
     console.error("Error adding customer:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // **Retrieve all customers**
 app.get("/customers", async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
   try {
-    const params = {
-      TableName: CUSTOMERS_TABLE,
-    };
-
-    const result = await dynamoDB.scan(params).promise();
-    res.json({ success: true, customers: result.Items });
+    const customers = await getCustomers();
+    res.json({ success: true, customers });
   } catch (error) {
     console.error("Error retrieving customers:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
+// **Get User Route**
+app.get("/users/:id", async (req, res) => {
+  try {
+    const user = await getUser(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+
 // Export handler for AWS Lambda
-module.exports.handler = serverless(app);
+export const handler = serverless(app);
