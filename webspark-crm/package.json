@@ -6,10 +6,12 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "seed": "node scripts/seedDatabase.js"
+    "seed": "node scripts/seedDatabase.js",
+    "test": "jest"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.751.0",
+    "@aws-sdk/lib-dynamodb": "^3.751.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
@@ -24,8 +26,10 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
+    "aws-sdk-mock": "^6.2.1",
     "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3"
+    "eslint-plugin-vue": "^8.0.3",
+    "jest": "^29.7.0"
   },
   "eslintConfig": {
     "root": true,
