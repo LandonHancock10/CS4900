@@ -18,11 +18,11 @@ jobs:
           node-version: '18'
 
       - name: Install Dependencies
-        working-directory: webspark-crm
+        working-directory: frontend
         run: yarn install
 
       - name: Build Vue App
-        working-directory: webspark-crm
+        working-directory: frontend
         env:
           VUE_APP_AWS_REGION: ${{ secrets.VUE_APP_AWS_REGION }}
           VUE_APP_AWS_ACCESS_KEY_ID: ${{ secrets.VUE_APP_AWS_ACCESS_KEY_ID }}
@@ -44,5 +44,5 @@ jobs:
           aws-region: ${{ secrets.VUE_APP_AWS_REGION }}
 
       - name: Sync Files to S3
-        working-directory: webspark-crm
-        run: aws s3 sync ./dist s3://webspark-crm --delete
+        working-directory: frontend
+        run: aws s3 sync ./dist s3://frontend --delete
