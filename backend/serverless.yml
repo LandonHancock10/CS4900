@@ -1,0 +1,58 @@
+service: webspark-crm-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-west-2
+  environment:
+    JWT_SECRET: "your-secret-key"
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+      Resource: "*"
+
+functions:
+  api:
+    handler: src/server.handler
+    events:
+      - http:
+          path: users/signup
+          method: post
+          cors:
+            origins: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            methods:
+              - GET
+              - POST
+              - OPTIONS
+      - http:
+          path: users/login
+          method: post
+          cors:
+            origins: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            methods:
+              - GET
+              - POST
+              - OPTIONS
+      - http:
+          path: customers
+          method: get
+          cors: true
+      - http:
+          path: customers
+          method: post
+          cors: true
+
+package:
+  include:
+    - node_modules/**
