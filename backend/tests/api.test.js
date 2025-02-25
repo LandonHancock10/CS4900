@@ -1,49 +1,66 @@
 import request from "supertest";
-import app from "../server.js";
-import { getUser, createUser } from "../src/services/userService.js";
-jest.mock("../src/services/userService.js");
+import app from "../src/server.js";
+import { v4 as uuidv4 } from "uuid";
 
-// ✅ Mock the Service Layer
-jest.mock("../webspark-crm-api/src/services/userService.js");
+// ✅ Ensure JWT_SECRET is set for tests
+process.env.JWT_SECRET = "test_secret";
 
-describe("API Tests", () => {
-  it("should return a user when queried by ID", async () => {
-    const mockUser = { id: "123", name: "John Doe" };
-    getUser.mockResolvedValue(mockUser);
+describe("API Routes - User Authentication", () => {
+  let testEmail, testUserId, testPassword;
 
-    const response = await request(app).get("/users/123");
-
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(mockUser);
-    expect(getUser).toHaveBeenCalledWith("123");
+  beforeEach(() => {
+    testUserId = uuidv4(); // Generate a unique user ID
+    testEmail = `testuser+${uuidv4()}@example.com`; // Generate a unique email for each test
+    testPassword = "TestPass123!";
   });
 
-  it("should return 404 when user is not found", async () => {
-    getUser.mockResolvedValue(null);
+  test("POST /users/signup should create a new user", async () => {
+    const res = await request(app).post("/users/signup").send({
+      email: testEmail,
+      password: testPassword,
+      firstName: "John",
+      lastName: "Doe",
+    });
 
-    const response = await request(app).get("/users/999");
-
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({ error: "User not found" });
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty("message", "User created successfully!");
   });
 
-  it("should create a new user successfully", async () => {
-    const mockUser = { id: "123", name: "John Doe" };
-    createUser.mockResolvedValue({ success: true });
+  test("POST /users/login should authenticate a user", async () => {
+    // ✅ Create a user first
+    await request(app).post("/users/signup").send({
+      email: testEmail,
+      password: testPassword,
+      firstName: "John",
+      lastName: "Doe",
+    });
 
-    const response = await request(app).post("/users").send(mockUser);
+    // ✅ Login with correct credentials
+    const res = await request(app).post("/users/login").send({
+      email: testEmail,
+      password: testPassword,
+    });
 
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual({ success: true });
-    expect(createUser).toHaveBeenCalledWith(mockUser);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("token"); // Ensure token is returned
   });
 
-  it("should return 400 for invalid user data", async () => {
-    createUser.mockRejectedValue(new Error("Invalid user data"));
+  test("POST /users/login should fail with incorrect credentials", async () => {
+    // ✅ Create a user first
+    await request(app).post("/users/signup").send({
+      email: testEmail,
+      password: testPassword,
+      firstName: "John",
+      lastName: "Doe",
+    });
 
-    const response = await request(app).post("/users").send({});
+    // ✅ Attempt login with wrong password
+    const res = await request(app).post("/users/login").send({
+      email: testEmail,
+      password: "WrongPass!",
+    });
 
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({ error: "Invalid user data" });
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty("message", "Invalid email or password.");
   });
 });

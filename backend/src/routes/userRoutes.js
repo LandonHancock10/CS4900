@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, authenticateUser, fetchUser } from "../controllers/userController.js";
+import { registerUser, authenticateUser, fetchUser } from "../controllers/userController.js"; 
 
 const router = express.Router();
 
@@ -10,6 +10,6 @@ router.post("/signup", registerUser);
 router.post("/login", authenticateUser);
 
 // **Route to retrieve a user by ID**
-router.get("/users/:id", fetchUser);
+router.get("/:id", fetchUser); 
 
 export default router;

@@ -219,6 +219,10 @@ export default {
 
 
 <style scoped>
+
+body {
+  overflow: hidden;
+}
 /* Full-page container */
 .communicate-page {
   width: 100%;

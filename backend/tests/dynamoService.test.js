@@ -1,39 +1,45 @@
+import { signupUser, getUser } from "../src/services/userService.js";
 import { jest } from "@jest/globals";
-import { getUserFromDB, saveUserToDB } from "../src/database/dynamoService";
+import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
 
-jest.mock("@aws-sdk/lib-dynamodb", () => {
-  const actualLib = jest.requireActual("@aws-sdk/lib-dynamodb");
+// ✅ Set up the mock DynamoDB client
+const mockDynamoDB = {
+  put: jest.fn().mockReturnThis(),
+  get: jest.fn().mockReturnThis(),
+  query: jest.fn().mockReturnThis(),
+  promise: jest.fn(),
+};
 
-  return {
-    DynamoDBDocumentClient: {
-      from: jest.fn(() => ({
-        send: jest.fn(async (command) => {
-          if (command instanceof actualLib.GetCommand) {
-            return { Item: { id: "123", name: "John Doe", email: "john@example.com" } };
-          }
-          if (command instanceof actualLib.PutCommand) {
-            return {};
-          }
-          return null;
-        }),
-      })),
-    },
-    GetCommand: actualLib.GetCommand,
-    PutCommand: actualLib.PutCommand,
-  };
-});
+// ✅ Mock AWS SDK AFTER defining mockDynamoDB
+jest.mock("aws-sdk", () => ({
+  DynamoDB: {
+    DocumentClient: jest.fn(() => mockDynamoDB),
+  },
+}));
 
-describe("DynamoDB Service Tests", () => {
-  it("should save and fetch a user successfully", async () => {
-    const mockUser = { id: "123", name: "John Doe", email: "john@example.com" };
+describe("DynamoDB Service - User Tests", () => {
+  let testEmail, testUserId;
 
-    // Save user to DynamoDB
-    await saveUserToDB(mockUser);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    testUserId = uuidv4(); // Generate unique user ID
+    testEmail = `test+${uuidv4()}@example.com`; // Generate unique email for each test
+  });
 
-    // Retrieve user from DynamoDB
-    const result = await getUserFromDB("123");
+  test("Should create a new user in DynamoDB", async () => {
+    mockDynamoDB.query().promise.mockResolvedValue({ Items: [] }); // No existing user
+    mockDynamoDB.put().promise.mockResolvedValue({});
 
-    // Assertions
-    expect(result).toEqual(mockUser);
+    const result = await signupUser({
+      email: testEmail,
+      password: "TestPass123!",
+      firstName: "John",
+      lastName: "Doe",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.message).toBe("User created successfully!");
+    expect(mockDynamoDB.put).toHaveBeenCalled();
   });
 });

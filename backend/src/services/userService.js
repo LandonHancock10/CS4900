@@ -1,5 +1,5 @@
 import AWS from "aws-sdk";
-import bcrypt from "bcryptjs"; 
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 
@@ -22,7 +22,7 @@ export const signupUser = async ({ email, password, firstName, lastName, profile
   }
 
   try {
-    // Step 1: Check if email exists
+    // Check if email exists
     const params = {
       TableName: USERS_TABLE,
       IndexName: "email-index",
@@ -31,16 +31,14 @@ export const signupUser = async ({ email, password, firstName, lastName, profile
     };
 
     const existingUser = await dynamoDB.query(params).promise();
-
     if (existingUser.Items.length > 0) {
       throw new Error("An account with this email already exists.");
     }
 
-    // Step 2: Hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Step 3: Create new user
     const userId = uuidv4();
+    
     const newUser = {
       userId,
       email,
@@ -84,15 +82,13 @@ export const loginUser = async (email, password) => {
 
     const user = data.Items[0];
 
-    // Step 2: Verify password
+    // Verify password
     const validPassword = await bcrypt.compare(password, user.passwordHash);
     if (!validPassword) {
       throw new Error("Invalid email or password.");
     }
 
-    // Step 3: Generate JWT token (with userId)
     const token = generateToken(user.userId);
-
     return { success: true, token };
   } catch (error) {
     console.error("Error in loginUser:", error);
@@ -109,13 +105,22 @@ export const getUser = async (userId) => {
   try {
     const params = {
       TableName: USERS_TABLE,
-      Key: { userId },
+      Key: { userId: userId }, // Ensure it's a string, not an object
     };
 
+    console.log("Fetching user with params:", params);
+
     const result = await dynamoDB.get(params).promise();
-    return result.Item || null;
+
+    if (!result || !result.Item) {
+      console.warn(`User with ID ${userId} not found.`);
+      return null;
+    }
+
+    console.log("User found:", result.Item);
+    return result.Item;
   } catch (error) {
     console.error("Error fetching user:", error);
-    throw new Error("Error fetching user.");
+    throw new Error("Error fetching user from database.");
   }
 };

@@ -1,5 +1,5 @@
 import { DynamoDBClient, ScanCommand, BatchWriteItemCommand, PutItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
-import bcrypt from "bcryptjs"; // Ensure bcrypt is installed using `npm install bcryptjs`
+import bcrypt from "bcryptjs"; 
 import { v4 as uuidv4 } from "uuid";
 
 const client = new DynamoDBClient({ region: "us-west-2" });

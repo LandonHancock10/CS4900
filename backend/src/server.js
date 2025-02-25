@@ -25,4 +25,5 @@ app.use(express.json());
 app.use("/users", userRoutes);
 app.use("/customers", customerRoutes);
 
-export const handler = serverless(app);
+export default app;  // ✅ Add this line for Jest tests
+export const handler = serverless(app);  // ✅ Keep this for deployment

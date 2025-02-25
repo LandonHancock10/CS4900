@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://o51nguwhcd.execute-api.us-west-2.amazonaws.com/dev"; // Ensure this is the correct API Gateway URL
+const API_BASE_URL = "https://o51nguwhcd.execute-api.us-west-2.amazonaws.com/dev";
 
 /**
  * Create a reusable Axios instance with proper CORS handling.

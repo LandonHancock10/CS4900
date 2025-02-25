@@ -1,40 +1,66 @@
+import { signupUser, loginUser } from "../src/services/userService.js";
 import { jest } from "@jest/globals";
-import { getUser, createUser } from "../../frontend/src/services/userService";
-import { getUserFromDB, saveUserToDB } from "../src/database/dynamoService";
+import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
 
-jest.mock("../src/services/dynamoService", () => ({
-  getUserFromDB: jest.fn(),
-  saveUserToDB: jest.fn(),
+// ✅ Set JWT_SECRET before running tests
+process.env.JWT_SECRET = "test_secret";
+
+// ✅ Mock DynamoDB
+const mockDynamoDB = {
+  put: jest.fn().mockReturnThis(),
+  get: jest.fn().mockReturnThis(),
+  query: jest.fn().mockReturnThis(),
+  promise: jest.fn(),
+};
+
+// ✅ Mock AWS SDK
+jest.mock("aws-sdk", () => ({
+  DynamoDB: {
+    DocumentClient: jest.fn(() => mockDynamoDB),
+  },
 }));
 
-describe("User Service Tests", () => {
-  it("should fetch a user successfully", async () => {
-    const mockUser = { id: "123", name: "John Doe" };
-    getUserFromDB.mockResolvedValue(mockUser);
+describe("User Service - Basic Tests", () => {
+  let testEmail, testUserId, testPassword, hashedPassword;
 
-    const result = await getUser("123");
-
-    expect(result).toEqual(mockUser);
-    expect(getUserFromDB).toHaveBeenCalledWith("123");
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    testUserId = uuidv4();
+    testEmail = `test1232@example.com`;
+    testPassword = "TestPass123!";
+    hashedPassword = await bcrypt.hash(testPassword, 10);
   });
 
-  it("should throw an error if no user ID is provided", async () => {
-    await expect(getUser()).rejects.toThrow("User ID is required");
+  test("Should successfully create a user", async () => {
+    mockDynamoDB.query().promise.mockResolvedValue({ Items: [] });
+    mockDynamoDB.put().promise.mockResolvedValue({});
+
+    const result = await signupUser({
+      email: testEmail,
+      password: testPassword,
+      firstName: "John",
+      lastName: "Doe",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.message).toBe("User created successfully!");
+    expect(mockDynamoDB.put).toHaveBeenCalled();
   });
 
-  it("should create a user successfully", async () => {
-    const mockUser = { id: "123", name: "John Doe" };
-    saveUserToDB.mockResolvedValue({ success: true });
-
-    const result = await createUser(mockUser);
-
-    expect(result).toEqual({ success: true });
-    expect(saveUserToDB).toHaveBeenCalledWith(mockUser);
-  });
-
-  it("should throw an error if invalid user data is provided", async () => {
-    await expect(createUser(null)).rejects.toThrow("Invalid user data");
-    await expect(createUser({})).rejects.toThrow("Invalid user data");
-    await expect(createUser({ id: "123" })).rejects.toThrow("Invalid user data");
-  });
+  test("Should successfully log in with correct credentials", async () => {
+    mockDynamoDB.query().promise.mockResolvedValue({
+      Items: [
+        {
+          userId: testUserId,
+          email: testEmail,
+          passwordHash: await bcrypt.hash(testPassword, 10),
+        },
+      ],
+    });
+  
+    const result = await loginUser(testEmail, testPassword);
+    expect(result.success).toBe(true);
+    expect(result.token).toBeDefined();
+  });  
 });
