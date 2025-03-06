@@ -44,30 +44,5 @@
           ]
         }
       }
-    },
-    "Workspaces": {
-      "workspaceId": "string",
-      "userId": "string",
-      "tasks": [
-        {
-          "taskId": "string",
-          "clientId": "string",
-          "clientName": "string",
-          "taskDescription": "string",
-          "status": "pending | completed",
-          "dueDate": "date",
-          "recurringFrequency": "number",
-          "nextRecurringDate": "date"
-        }
-      ]
-    },
-    "Calls": {
-      "callId": "string",
-      "userId": "string",
-      "clientId": "string",
-      "status": "initiated | ended",
-      "confirmationStatus": "confirmed | canceled",
-      "timestamp": "date"
     }
-  }
   
