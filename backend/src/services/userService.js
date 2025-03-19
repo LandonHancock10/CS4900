@@ -105,7 +105,7 @@ export const getUser = async (userId) => {
   try {
     const params = {
       TableName: USERS_TABLE,
-      Key: { userId: userId }, // Ensure it's a string, not an object
+      Key: { userId: userId }, 
     };
 
     console.log("Fetching user with params:", params);

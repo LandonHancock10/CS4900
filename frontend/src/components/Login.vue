@@ -31,7 +31,7 @@ export default {
     return {
       email: '',
       password: '',
-      errors: {}, // Store validation errors
+      errors: {}, 
     };
   },
   methods: {

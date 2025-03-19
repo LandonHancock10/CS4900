@@ -3,10 +3,8 @@ import { jest } from "@jest/globals";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 
-// ✅ Set JWT_SECRET before running tests
 process.env.JWT_SECRET = "test_secret";
 
-// ✅ Mock DynamoDB
 const mockDynamoDB = {
   put: jest.fn().mockReturnThis(),
   get: jest.fn().mockReturnThis(),
@@ -14,7 +12,6 @@ const mockDynamoDB = {
   promise: jest.fn(),
 };
 
-// ✅ Mock AWS SDK
 jest.mock("aws-sdk", () => ({
   DynamoDB: {
     DocumentClient: jest.fn(() => mockDynamoDB),

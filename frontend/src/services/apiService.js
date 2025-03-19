@@ -131,9 +131,103 @@ export const createCustomer = async (customer) => {
   }
 
   try {
-    const response = await axiosInstance.post("/customers", customer);
+    // Remove profile picture handling to avoid size issues
+    // eslint-disable-next-line no-unused-vars
+    const { profilePicture, ...customerData } = customer;
+    
+    const response = await axiosInstance.post("/customers", customerData);
     return response.data;
   } catch (error) {
     handleApiError(error, "creating customer");
+  }
+};
+
+/**
+ * Fetch a single customer by ID.
+ */
+export const getCustomerById = async (customerId) => {
+  if (!customerId) throw new Error("Customer ID is required");
+
+  try {
+    const response = await axiosInstance.get(`/customers/${customerId}`);
+    return response.data.customer;
+  } catch (error) {
+    handleApiError(error, "fetching customer details");
+  }
+};
+
+/**
+ * Update customer information.
+ */
+export const updateCustomer = async (customerId, updates) => {
+  if (!customerId) throw new Error("Customer ID is required");
+
+  try {
+    // Remove profile picture handling to avoid size issues
+    // eslint-disable-next-line no-unused-vars
+    const { profilePicture, _profilePictureFile, ...updateData } = updates;
+    
+    const response = await axiosInstance.put(`/customers/${customerId}`, updateData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "updating customer");
+  }
+};
+
+/**
+ * Update customer tasks.
+ */
+export const updateTasks = async (customerId, tasks) => {
+  if (!customerId) throw new Error("Customer ID is required");
+  if (!Array.isArray(tasks)) throw new Error("Tasks must be an array");
+
+  try {
+    const response = await axiosInstance.put(`/customers/${customerId}/tasks`, tasks);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "updating tasks");
+  }
+};
+
+/**
+ * Update customer notes.
+ */
+export const updateNotes = async (customerId, notes) => {
+  if (!customerId) throw new Error("Customer ID is required");
+
+  try {
+    const response = await axiosInstance.put(`/customers/${customerId}/notes`, notes);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "updating notes");
+  }
+};
+
+/**
+ * Update assigned users for a customer.
+ */
+export const updateAssignedUsers = async (customerId, assignedUsers) => {
+  if (!customerId) throw new Error("Customer ID is required");
+  if (!Array.isArray(assignedUsers)) throw new Error("Assigned users must be an array");
+
+  try {
+    const response = await axiosInstance.put(`/customers/${customerId}/users`, assignedUsers);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "updating assigned users");
+  }
+};
+
+/**
+ * Delete a customer.
+ */
+export const deleteCustomer = async (customerId) => {
+  if (!customerId) throw new Error("Customer ID is required");
+
+  try {
+    const response = await axiosInstance.delete(`/customers/${customerId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "deleting customer");
   }
 };

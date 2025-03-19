@@ -12,6 +12,7 @@ provider:
         - "dynamodb:Query"
         - "dynamodb:Scan"
         - "dynamodb:PutItem"
+        - "dynamodb:GetItem"
         - "dynamodb:UpdateItem"
         - "dynamodb:DeleteItem"
       Resource: "*"
@@ -23,27 +24,11 @@ functions:
       - http:
           path: users/signup
           method: post
-          cors:
-            origins: "*"
-            headers:
-              - Content-Type
-              - Authorization
-            methods:
-              - GET
-              - POST
-              - OPTIONS
+          cors: true
       - http:
           path: users/login
           method: post
-          cors:
-            origins: "*"
-            headers:
-              - Content-Type
-              - Authorization
-            methods:
-              - GET
-              - POST
-              - OPTIONS
+          cors: true
       - http:
           path: customers
           method: get
@@ -51,6 +36,30 @@ functions:
       - http:
           path: customers
           method: post
+          cors: true
+      - http:
+          path: customers/{customerId}
+          method: get
+          cors: true
+      - http:
+          path: customers/{customerId}
+          method: put
+          cors: true
+      - http:
+          path: customers/{customerId}
+          method: delete
+          cors: true
+      - http:
+          path: customers/{customerId}/tasks
+          method: put
+          cors: true
+      - http:
+          path: customers/{customerId}/notes
+          method: put
+          cors: true
+      - http:
+          path: customers/{customerId}/users
+          method: put
           cors: true
 
 package:
