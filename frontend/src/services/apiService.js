@@ -2,15 +2,12 @@ import axios from "axios";
 
 const API_BASE_URL = "https://o51nguwhcd.execute-api.us-west-2.amazonaws.com/dev";
 
-/**
- * Create a reusable Axios instance with proper CORS handling.
- */
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: false // AWS API Gateway does not require credentials in most cases
+  withCredentials: false
 });
 
 /**

@@ -5,7 +5,7 @@ import { PutCommand, ScanCommand, GetCommand, UpdateCommand, DeleteCommand } fro
 const CUSTOMERS_TABLE = "Customers";
 
 /**
- * Create a new customer in DynamoDB with simplified tabs.
+ * Create a new customer in DynamoDB.
  */
 export const createCustomer = async ({ name, address, companyName, email, phone, profilePicture }) => {
   if (!name || !email || !phone) {
