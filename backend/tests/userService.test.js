@@ -24,7 +24,7 @@ describe("User Service - Basic Tests", () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     testUserId = uuidv4();
-    testEmail = `test1232@example.com`;
+    testEmail = `test123342@example.com`;
     testPassword = "TestPass123!";
     hashedPassword = await bcrypt.hash(testPassword, 10);
   });
@@ -36,7 +36,7 @@ describe("User Service - Basic Tests", () => {
     const result = await signupUser({
       email: testEmail,
       password: testPassword,
-      firstName: "John",
+      firstName: "Jane",
       lastName: "Doe",
     });
 

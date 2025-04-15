@@ -1,4 +1,5 @@
 import { signupUser, loginUser, getUser } from "../services/userService.js";
+import { uploadProfilePicture } from "../services/s3Service.js";
 
 /**
  * Controller to handle user signup.
@@ -39,5 +40,45 @@ export const fetchUser = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Controller to handle profile picture uploads
+ */
+export const uploadUserProfilePicture = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded"
+      });
+    }
+    
+    // Upload to S3
+    const pictureUrl = await uploadProfilePicture(
+      req.file.buffer,
+      'users',
+      userId,
+      req.file.originalname
+    );
+    
+    // Update user in DynamoDB
+    await updateProfilePicture(userId, pictureUrl);
+    
+    res.status(200).json({
+      success: true,
+      message: "Profile picture uploaded successfully",
+      profilePictureUrl: pictureUrl
+    });
+    
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to upload profile picture"
+    });
   }
 };

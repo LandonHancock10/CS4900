@@ -20,19 +20,28 @@
       <input type="password" v-model="password" placeholder="Password" class="input-field" />
       <p v-if="errors.password" class="error-text">{{ errors.password }}</p>
 
-      <label class="file-upload-label">
-        Profile Picture
-        <input type="file" @change="handleProfilePicture" class="input-field" accept="image/*" />
-      </label>
-      <p v-if="profilePicture">{{ profilePicture.name }}</p>
+      <div class="profile-picture-section">
+        <label class="file-upload-label">
+          Profile Picture
+          <input type="file" @change="handleProfilePicture" class="input-field" accept="image/*" />
+        </label>
+        
+        <!-- Add preview of selected image -->
+        <div v-if="profilePicture" class="preview-container">
+          <img :src="profilePreview" alt="Profile Preview" class="preview-image" />
+          <p class="file-name">{{ profilePicture.name }}</p>
+        </div>
+      </div>
 
-      <button type="submit" class="signup-button">Create Account</button>
+      <button type="submit" class="signup-button" :disabled="isSubmitting">
+        {{ isSubmitting ? 'Creating Account...' : 'Create Account' }}
+      </button>
     </form>
   </div>
 </template>
 
 <script>
-import { createUser } from "@/services/apiService"; // ✅ Now uses the correct API service
+import { createUser, uploadUserProfilePicture } from "@/services/apiService";
 import { v4 as uuidv4 } from "uuid";
 
 export default {
@@ -44,13 +53,38 @@ export default {
       email: "",
       password: "",
       profilePicture: null,
+      profilePreview: null,
       errors: {}, // Store validation errors
+      isSubmitting: false,
     };
   },
   methods: {
     handleProfilePicture(event) {
-      this.profilePicture = event.target.files[0]; // Get the selected file
+      const file = event.target.files[0];
+      if (file) {
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          alert("File is too large. Maximum size is 5MB.");
+          return;
+        }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert("Only image files are allowed.");
+          return;
+        }
+        
+        this.profilePicture = file;
+        
+        // Create a preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.profilePreview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
     },
+    
     validateForm() {
       this.errors = {};
 
@@ -76,18 +110,37 @@ export default {
         return;
       }
 
-      const userData = {
-        userId: uuidv4(), // Generate unique userId
-        firstName: this.firstName,
-        lastName: this.lastName,
-        email: this.email,
-        password: this.password, // Password should be hashed for security in production
-        profilePicture: this.profilePicture ? this.profilePicture.name : null,
-      };
+      this.isSubmitting = true;
 
       try {
-        const response = await createUser(userData); // ✅ API call instead of direct database import
+        // Generate user ID
+        const userId = uuidv4();
+        
+        // Create user without profile picture first
+        const userData = {
+          userId: userId,
+          firstName: this.firstName,
+          lastName: this.lastName,
+          email: this.email,
+          password: this.password,
+          profilePicture: null, // We'll update this after upload
+        };
+
+        // Create the user
+        const response = await createUser(userData);
+        
         if (response.success) {
+          // If profile picture was selected, upload it
+          if (this.profilePicture) {
+            try {
+              const uploadResponse = await uploadUserProfilePicture(userId, this.profilePicture);
+              console.log("Profile picture uploaded:", uploadResponse);
+            } catch (uploadError) {
+              console.error("Error uploading profile picture:", uploadError);
+              // Continue anyway since the user was created
+            }
+          }
+          
           console.log("User created successfully:", response);
           this.$router.push("/"); // Redirect to login page after signup
         } else {
@@ -96,6 +149,8 @@ export default {
       } catch (error) {
         console.error("Error creating user:", error);
         alert("An error occurred while creating the account.");
+      } finally {
+        this.isSubmitting = false;
       }
     },
   },
@@ -171,6 +226,33 @@ export default {
   text-align: left;
   font-size: 14px;
   color: #f2f3f5;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.profile-picture-section {
+  margin-bottom: 16px;
+}
+
+.preview-container {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.preview-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #5865f2;
+  margin-bottom: 5px;
+}
+
+.file-name {
+  font-size: 12px;
+  color: #b9bbbe;
 }
 
 .error-text {
@@ -193,7 +275,12 @@ export default {
   cursor: pointer;
 }
 
-.signup-button:hover {
+.signup-button:hover:not(:disabled) {
   background-color: #4752c4;
+}
+
+.signup-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>

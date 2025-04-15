@@ -1,15 +1,12 @@
 import express from "express";
-import { registerUser, authenticateUser, fetchUser } from "../controllers/userController.js"; 
+import { registerUser, authenticateUser, fetchUser, uploadUserProfilePicture } from "../controllers/userController.js";
+import { upload } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
-
-// **Route for user signup**
 router.post("/signup", registerUser);
-
-// **Route for user login**
 router.post("/login", authenticateUser);
+router.get("/:id", fetchUser);
 
-// **Route to retrieve a user by ID**
-router.get("/:id", fetchUser); 
+router.post("/:id/profile-picture", upload.single("profilePicture"), uploadUserProfilePicture);
 
 export default router;

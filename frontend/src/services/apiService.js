@@ -228,3 +228,30 @@ export const deleteCustomer = async (customerId) => {
     handleApiError(error, "deleting customer");
   }
 };
+
+/**
+ * Upload a profile picture for a user
+ * @param {string} userId - The user ID
+ * @param {File} file - The profile picture file
+ * @returns {Promise<object>} - Response data
+ */
+export const uploadUserProfilePicture = async (userId, file) => {
+  if (!userId || !file) {
+    throw new Error("User ID and profile picture are required");
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("profilePicture", file);
+    
+    const response = await axiosInstance.post(`/users/${userId}/profile-picture`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "uploading profile picture");
+  }
+};

@@ -124,3 +124,32 @@ export const getUser = async (userId) => {
     throw new Error("Error fetching user from database.");
   }
 };
+
+/**
+ * Update a user's profile picture
+ * @param {string} userId
+ * @param {string} pictureUrl
+ * @returns {Promise<object>}
+ */
+export const updateProfilePicture = async (userId, pictureUrl) => {
+  if (!userId) throw new Error("User ID is required");
+  if (!pictureUrl) throw new Error("Picture URL is required");
+
+  try {
+    const params = {
+      TableName: USERS_TABLE,
+      Key: { userId },
+      UpdateExpression: "set profilePicture = :url",
+      ExpressionAttributeValues: {
+        ":url": pictureUrl
+      },
+      ReturnValues: "UPDATED_NEW"
+    };
+
+    await dynamoDB.update(params).promise();
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    throw new Error("Failed to update profile picture");
+  }
+};
