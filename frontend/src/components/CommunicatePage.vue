@@ -917,6 +917,7 @@ body {
   background-color: #1E1F22;
   padding-right: 16px;
   padding-left: 2px;
+  padding-top: 16px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #232428;
