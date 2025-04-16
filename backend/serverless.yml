@@ -76,6 +76,15 @@ functions:
           path: customers/{customerId}/profile-picture
           method: post
           cors: true
+      - http:
+          path: users
+          method: get
+          cors: true
+      - http:
+          path: users
+          method: options
+          cors: true
+
 
 package:
   include:

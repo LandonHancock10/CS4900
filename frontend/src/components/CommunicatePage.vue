@@ -105,18 +105,23 @@
         <!-- Assign Self Button -->
         <button class="add-new" @click="assignSelfToCustomer">Assign Self to Contact</button>
 
-        <!-- Assigned Users List -->
-        <div class="contacts" style="margin-top: 12px;">
-          <div class="contact" v-for="member in team" :key="member.id" :class="{ 'active': isUserAssigned(member.id) }"
-            @click="toggleAssignUser(member)">
-            <img :src="member.avatar || defaultAvatar" alt="Avatar" class="contact-avatar" />
-            <span class="contact-name">{{ member.name }}</span>
+<!-- Assigned Users List -->
+<div class="contacts" style="margin-top: 12px;">
+  <div
+    class="contact"
+    v-for="member in assignedUsersDetails"
+    :key="member.id"
+  >
+    <img :src="member.avatar || defaultAvatar" alt="Avatar" class="contact-avatar" />
+    <span class="contact-name">{{ member.name }}</span>
 
-            <!-- Remove Assigned User Button -->
-            <button v-if="isUserAssigned(member.id)" class="delete-btn"
-              @click.stop="removeAssignedUser(member.id)">×</button>
-          </div>
-        </div>
+    <!-- Remove Assigned User Button -->
+    <button
+      class="delete-btn"
+      @click.stop="removeAssignedUser(member.id)"
+    >×</button>
+  </div>
+</div>
       </div>
 
     </div>
@@ -258,59 +263,97 @@ export default {
     },
 
     removeAssignedUser(userId) {
-      if (!this.selectedCustomer) return;
+  if (!this.selectedCustomer) return;
 
-      // Ensure everything is a string before filtering
-      this.editableCustomer.assignedUsers = this.editableCustomer.assignedUsers
-        .map(String)
-        .filter(id => id !== String(userId));
+  console.log("Removing user ID from assigned list:", userId);
 
-      this.updateAssignedUsers();
-    },
+  // Normalize and filter
+  const filtered = this.editableCustomer.assignedUsers
+    .map(id => (typeof id === "object" && id.S ? id.S : String(id)))
+    .filter(id => id !== String(userId));
+
+  // Trigger Vue reactivity by creating new arrays
+  this.selectedCustomer = {
+    ...this.selectedCustomer,
+    assignedUsers: filtered
+  };
+
+  this.editableCustomer = {
+    ...this.editableCustomer,
+    assignedUsers: filtered
+  };
+
+  this.updateAssignedUsers();
+},
 
     async updateAssignedUsers() {
-      try {
-        const cleanUserIds = this.editableCustomer.assignedUsers.map(String); // Normalize all IDs to strings
-        const result = await updateAssignedUsers(this.selectedCustomer.customerId, cleanUserIds);
+  try {
+    const cleanUserIds = this.editableCustomer.assignedUsers.map(String); // Normalize all IDs
+    const result = await updateAssignedUsers(this.selectedCustomer.customerId, cleanUserIds);
 
-        if (result.success) {
-          this.selectedCustomer.assignedUsers = [...cleanUserIds];
-        }
-      } catch (error) {
-        console.error("Failed to update assigned users:", error);
-      }
-    },
+    if (result.success) {
+      // Ensure both are updated so UI reflects correctly
+      this.selectedCustomer.assignedUsers = [...cleanUserIds];
+      this.editableCustomer.assignedUsers = [...cleanUserIds];
+    }
+  } catch (error) {
+    console.error("Failed to update assigned users:", error);
+  }
+},
 
     async fetchAllUsers() {
-      try {
-        this.allUsers = await getAllUsers();
-      } catch (error) {
-        console.error("Failed to fetch all users:", error);
-      }
-    },
+  try {
+    const users = await getAllUsers();
+
+    // Normalize the structure to match what the template expects
+    this.team = users.map(u => ({
+      id: u.userId,
+      name: `${u.firstName} ${u.lastName}`,
+      avatar: u.profilePicture || null
+    }));
+
+    console.log("TEAM DATA Normalized:", this.team);
+  } catch (error) {
+    console.error("Failed to fetch all users:", error);
+  }
+},
 
     async selectCustomer(customer) {
-      try {
-        this.loading = true;
-        const fullCustomer = await getCustomerById(customer.customerId);
+  try {
+    this.loading = true;
+    const fullCustomer = await getCustomerById(customer.customerId);
 
-        const customerWithDefaults = {
-          ...fullCustomer,
-          notes: fullCustomer.notes || "",
-          tasks: fullCustomer.tasks || [],
-          assignedUsers: fullCustomer.assignedUsers || []
-        };
+    const customerWithDefaults = {
+      ...fullCustomer,
+      notes: fullCustomer.notes || "",
+      tasks: fullCustomer.tasks || [],
+      assignedUsers: this.normalizeAssignedUsers(fullCustomer.assignedUsers || [])
+    };
 
-        this.selectedCustomer = customerWithDefaults;
-        this.editableCustomer = JSON.parse(JSON.stringify(customerWithDefaults)); // Deep clone
-        this.activeTab = 'information';
-        this.loading = false;
-      } catch (error) {
-        this.error = error.message || "Error fetching customer details";
-        console.error("Error selecting customer:", error);
-        this.loading = false;
-      }
-    },
+    this.selectedCustomer = customerWithDefaults;
+    this.editableCustomer = JSON.parse(JSON.stringify(customerWithDefaults));
+    this.activeTab = 'information';
+    this.loading = false;
+    console.log("assignedUsers RAW:", fullCustomer.assignedUsers);
+  } catch (error) {
+    this.error = error.message || "Error fetching customer details";
+    console.error("Error selecting customer:", error);
+    this.loading = false;
+  }
+},
+
+normalizeAssignedUsers(assignedUsers) {
+  console.log("Normalizing assignedUsers:", assignedUsers);
+
+  if (!Array.isArray(assignedUsers)) return [];
+  
+  // Handle array of { S: "uuid" } objects
+  if (assignedUsers.length && typeof assignedUsers[0] === "object" && assignedUsers[0].S) {
+    return assignedUsers.map(u => u.S);
+  }
+
+  return assignedUsers; // Already normalized
+},
 
     formatDate(dateString) {
       if (!dateString) return '';
@@ -696,11 +739,14 @@ export default {
     },
 
     isUserAssigned(userId) {
-      if (!this.selectedCustomer || !this.selectedCustomer.assignedUsers) return false;
+  if (!this.selectedCustomer || !this.selectedCustomer.assignedUsers) return false;
 
-      // Ensure consistent string comparison
-      return this.selectedCustomer.assignedUsers.map(String).includes(String(userId));
-    },
+  const normalized = this.selectedCustomer.assignedUsers.map(id =>
+    typeof id === "object" && id.S ? id.S : String(id)
+  );
+
+  return normalized.includes(String(userId));
+},
 
 
     async toggleAssignUser(user) {
@@ -869,7 +915,7 @@ body {
   width: 100%;
   max-width: 300px;
   background-color: #1E1F22;
-  padding-top: 16px;
+  padding-top: 56px;
   padding-right: 16px;
   padding-left: 2px;
   display: flex;
@@ -967,6 +1013,7 @@ body {
   background-color: #36393F;
   color: white;
   height: 100%;
+  padding-top: 20px;
 }
 
 .panel-layout {
@@ -1009,6 +1056,7 @@ body {
   /* Firefox */
   -ms-overflow-style: none;
   /* IE 10+ */
+  padding-bottom: 20px;
 }
 
 .tab-content-container::-webkit-scrollbar {
@@ -1213,6 +1261,31 @@ body {
   font-size: 18px;
   margin-bottom: 16px;
   margin-top: 0px;
+}
+
+.right-sidebar .contact {
+  position: relative;
+}
+
+.right-sidebar .delete-btn {
+  visibility: hidden;
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #FF5555;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.right-sidebar .contact:hover .delete-btn {
+  visibility: visible;
+}
+
+.right-sidebar .delete-btn:hover {
+  opacity: 1;
 }
 
 .team-members {
