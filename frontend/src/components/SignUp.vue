@@ -42,7 +42,6 @@
 
 <script>
 import { createUser, uploadUserProfilePicture } from "@/services/apiService";
-import { v4 as uuidv4 } from "uuid";
 
 export default {
   name: "SignUp",
@@ -63,26 +62,56 @@ export default {
     handleProfilePicture(event) {
   const file = event.target.files[0];
   if (file) {
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File is too large. Maximum size is 5MB.");
-      return;
-    }
-    
     // Validate file type
     if (!file.type.startsWith('image/')) {
       alert("Only image files are allowed.");
       return;
     }
     
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File is too large. Maximum size is 5MB.");
+      return;
+    }
+    
     this.profilePicture = file;
     
-    // Create a preview AND store base64 data
+    // Create a canvas to resize the image
+    const img = new Image();
     const reader = new FileReader();
+    
     reader.onload = (e) => {
-      this.profilePreview = e.target.result;
-      this.profilePictureBase64 = e.target.result; // Store the base64 data
+      img.onload = () => {
+        // Calculate new dimensions (max 500px width/height)
+        let width = img.width;
+        let height = img.height;
+        const maxSize = 500;
+        
+        if (width > height && width > maxSize) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+        
+        // Create canvas and resize
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw resized image to canvas
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Get compressed base64 (0.7 quality JPEG)
+        this.profilePreview = canvas.toDataURL('image/jpeg', 0.7);
+        this.profilePictureBase64 = this.profilePreview;
+      };
+      
+      img.src = e.target.result;
     };
+    
     reader.readAsDataURL(file);
   }
 },
@@ -107,35 +136,38 @@ export default {
     },
 
     async registerUser() {
-      if (!this.validateForm()) {
-        alert("Please correct the errors in the form.");
-        return;
-      }
+  if (!this.validateForm()) {
+    alert("Please correct the errors in the form.");
+    return;
+  }
 
-      this.isSubmitting = true;
+  this.isSubmitting = true;
 
   try {
-    // Generate user ID
-    const userId = uuidv4();
-    
     // Create user without profile picture first
     const userData = {
-      userId: userId,
       firstName: this.firstName,
       lastName: this.lastName,
       email: this.email,
-      password: this.password,
-      profilePicture: null, // We'll update this after upload
+      password: this.password
     };
 
     // Create the user
+    console.log("Creating user...");
     const response = await createUser(userData);
     
-    if (response.success) {
-      // If profile picture was selected, upload it using base64
+    if (response.success && response.userId) {
+      console.log(`User created successfully with backend-generated ID: ${response.userId}`);
+      
+      // If profile picture was selected, upload it using backend-generated userId
       if (this.profilePictureBase64) {
         try {
-          const uploadResponse = await uploadUserProfilePicture(userId, this.profilePictureBase64);
+          // Wait to ensure the user is fully propagated in DynamoDB
+          console.log("Waiting for user creation to complete...");
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          console.log(`Uploading profile picture for user: ${response.userId}`);
+          const uploadResponse = await uploadUserProfilePicture(response.userId, this.profilePictureBase64);
           console.log("Profile picture uploaded:", uploadResponse);
         } catch (uploadError) {
           console.error("Error uploading profile picture:", uploadError);

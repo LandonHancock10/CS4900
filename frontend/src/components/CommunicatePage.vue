@@ -18,24 +18,13 @@
         </div>
       </div>
 
-      <!-- Customer Details Panel with Vertical Tabs -->
+      <!-- Customer Details Panel without Tabs -->
       <div v-if="selectedCustomer" class="customer-details-panel">
-        <div class="panel-layout">
-          <!-- Vertical Tabs Navigation on Left -->
-          <div class="tabs-navigation vertical">
-            <div class="tab" @click="activeTab = 'information'" :class="{ active: activeTab === 'information' }">
-              Information
-            </div>
-            <div class="tab" @click="activeTab = 'tasks'" :class="{ active: activeTab === 'tasks' }">
-              Tasks
-            </div>
-          </div>
-
-          <!-- Tab Content -->
+        <div class="panel-layout no-tabs">
           <div class="tab-content-container">
             <div class="tab-content">
-              <!-- Information Tab -->
-              <div v-if="activeTab === 'information'" class="info-tab">
+              <!-- Customer Information -->
+              <div class="info-tab">
                 <h2>Customer Information</h2>
                 <form @submit.prevent="updateCustomerInfo">
                   <div class="form-group">
@@ -67,14 +56,14 @@
                   </div>
                   <div class="form-group">
                     <label>Notes</label>
-                    <textarea v-model="editableCustomer.information.notes" rows="4"></textarea>
+                    <textarea v-model="editableCustomer.notes" rows="4"></textarea>
                   </div>
                   <button type="submit" class="save-button">Save Changes</button>
                 </form>
               </div>
 
-              <!-- Tasks Tab -->
-              <div v-else-if="activeTab === 'tasks'" class="tasks-tab">
+              <!-- Tasks Section -->
+              <div class="tasks-tab" style="margin-top: 32px;">
                 <h2>Tasks</h2>
                 <div class="tasks-container">
                   <div v-if="!editableCustomer.tasks || editableCustomer.tasks.length === 0" class="no-tasks">
@@ -112,16 +101,24 @@
       <!-- Right Sidebar: Team Members and Assigned Users -->
       <div class="right-sidebar">
         <h2>Team Members</h2>
-        <div class="team-members">
-          <div class="team-member" v-for="member in team" :key="member.id" @click="toggleAssignUser(member)"
-            :class="{ 'assigned': isUserAssigned(member.id) }">
-            <img :src="member.avatar" alt="Avatar" class="team-avatar" />
-            <span class="team-name">{{ member.name }}</span>
-            <span v-if="isUserAssigned(member.id)" class="assigned-badge">✓</span>
+
+        <!-- Assign Self Button -->
+        <button class="add-new" @click="assignSelfToCustomer">Assign Self to Contact</button>
+
+        <!-- Assigned Users List -->
+        <div class="contacts" style="margin-top: 12px;">
+          <div class="contact" v-for="member in team" :key="member.id" :class="{ 'active': isUserAssigned(member.id) }"
+            @click="toggleAssignUser(member)">
+            <img :src="member.avatar || defaultAvatar" alt="Avatar" class="contact-avatar" />
+            <span class="contact-name">{{ member.name }}</span>
+
+            <!-- Remove Assigned User Button -->
+            <button v-if="isUserAssigned(member.id)" class="delete-btn"
+              @click.stop="removeAssignedUser(member.id)">×</button>
           </div>
-          <button class="add-new">+ Add Team Member</button>
         </div>
       </div>
+
     </div>
 
     <!-- MODAL FOR ADDING CONTACT -->
@@ -183,7 +180,9 @@ import {
   updateTasks,
   updateNotes,
   updateAssignedUsers,
-  deleteCustomer
+  deleteCustomer,
+  uploadCustomerProfilePicture,
+  getAllUsers
 } from "@/services/apiService";
 
 export default {
@@ -194,17 +193,14 @@ export default {
   data() {
     return {
       showModal: false,
+      allUsers: [],
       showDeleteModal: false,
       customerToDelete: null,
       contacts: [],
       selectedCustomer: null,
       editableCustomer: null,
       activeTab: 'information',
-      team: [
-        { id: 1, name: "Sean Foster", avatar: require('@/assets/user.png') },
-        { id: 2, name: "Jane Doe", avatar: require('@/assets/user.png') },
-        { id: 3, name: "John Smith", avatar: require('@/assets/user.png') },
-      ],
+      team: [],
       newContact: {
         name: "",
         address: "",
@@ -220,11 +216,23 @@ export default {
       error: null
     };
   },
+  computed: {
+    assignedUsersDetails() {
+      if (!this.selectedCustomer || !this.selectedCustomer.assignedUsers) return [];
+      return this.team.filter(user => this.selectedCustomer.assignedUsers.includes(user.id));
+    }
+  },
   methods: {
     async fetchContacts() {
       try {
         this.loading = true;
         this.contacts = await getCustomers();
+
+        // Auto-select the first contact if any exist
+        if (this.contacts.length > 0) {
+          this.selectCustomer(this.contacts[0]);
+        }
+
         this.loading = false;
       } catch (error) {
         this.error = error.message || "Error fetching contacts";
@@ -233,19 +241,63 @@ export default {
       }
     },
 
+    assignSelfToCustomer() {
+      const token = localStorage.getItem("token");
+      if (!token) return alert("You must be logged in.");
+
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const userId = String(payload.userId); // Ensure it's a string
+
+      if (!this.selectedCustomer || !userId) return;
+
+      const assigned = this.editableCustomer.assignedUsers.map(String);
+      if (!assigned.includes(userId)) {
+        this.editableCustomer.assignedUsers.push(userId);
+        this.updateAssignedUsers();
+      }
+    },
+
+    removeAssignedUser(userId) {
+      if (!this.selectedCustomer) return;
+
+      // Ensure everything is a string before filtering
+      this.editableCustomer.assignedUsers = this.editableCustomer.assignedUsers
+        .map(String)
+        .filter(id => id !== String(userId));
+
+      this.updateAssignedUsers();
+    },
+
+    async updateAssignedUsers() {
+      try {
+        const cleanUserIds = this.editableCustomer.assignedUsers.map(String); // Normalize all IDs to strings
+        const result = await updateAssignedUsers(this.selectedCustomer.customerId, cleanUserIds);
+
+        if (result.success) {
+          this.selectedCustomer.assignedUsers = [...cleanUserIds];
+        }
+      } catch (error) {
+        console.error("Failed to update assigned users:", error);
+      }
+    },
+
+    async fetchAllUsers() {
+      try {
+        this.allUsers = await getAllUsers();
+      } catch (error) {
+        console.error("Failed to fetch all users:", error);
+      }
+    },
+
     async selectCustomer(customer) {
       try {
         this.loading = true;
         const fullCustomer = await getCustomerById(customer.customerId);
 
-        // Ensure the customer has the expected structure by providing defaults
         const customerWithDefaults = {
           ...fullCustomer,
-          // Ensure information contains notes
-          information: fullCustomer.information || { notes: "" },
-          // Ensure tasks is an array
+          notes: fullCustomer.notes || "",
           tasks: fullCustomer.tasks || [],
-          // Ensure assignedUsers is an array
           assignedUsers: fullCustomer.assignedUsers || []
         };
 
@@ -306,7 +358,6 @@ export default {
             this.editableCustomer = null;
           }
 
-          alert("Customer deleted successfully!");
         }
 
         this.loading = false;
@@ -330,6 +381,20 @@ export default {
           return;
         }
 
+        console.log("Creating new customer with data:", {
+          ...this.newContact,
+          profilePicture: this.newContact.profilePicture ?
+            `${this.newContact.profilePicture.substring(0, 30)}... (length: ${this.newContact.profilePicture.length})` :
+            null
+        });
+
+        // Check if we have a profile picture
+        if (this.newContact.profilePicture) {
+          console.log("Profile picture included in request, length:", this.newContact.profilePicture.length);
+        } else {
+          console.log("No profile picture included in request");
+        }
+
         const result = await createCustomer({
           name: this.newContact.name,
           address: this.newContact.address,
@@ -339,16 +404,42 @@ export default {
           profilePicture: this.newContact.profilePicture
         });
 
+        console.log("Customer creation result:", result);
+
         if (result.success) {
+          console.log("Customer created successfully:", result.customer);
+
+          // If we have a customer ID and profile picture, but the customer in the response doesn't have a profile picture,
+          // we need to upload it separately
+          if (result.customer.customerId && this.newContact.profilePicture && !result.customer.profilePicture) {
+            try {
+              console.log("Customer created without profile picture, uploading separately...");
+              const uploadResponse = await uploadCustomerProfilePicture(
+                result.customer.customerId,
+                this.newContact.profilePicture
+              );
+              console.log("Profile picture upload response:", uploadResponse);
+
+              if (uploadResponse.success) {
+                result.customer.profilePicture = uploadResponse.profilePictureUrl;
+              }
+            } catch (uploadError) {
+              console.error("Error uploading profile picture:", uploadError);
+            }
+          }
+
           this.contacts.push(result.customer);
           this.showModal = false;
           this.resetContactForm();
+        } else {
+          console.error("Customer creation failed:", result);
+          alert(result.message || "Error creating customer");
         }
 
         this.loading = false;
       } catch (error) {
-        this.error = error.message || "Error saving customer";
         console.error("Error saving customer:", error);
+        alert(error.message || "Error creating customer");
         this.loading = false;
       }
     },
@@ -357,22 +448,21 @@ export default {
       try {
         this.loading = true;
 
-        // Update customer basic info without profile picture
+        // Update customer basic info
         const updates = {
           name: this.editableCustomer.name,
           companyName: this.editableCustomer.companyName,
           email: this.editableCustomer.email,
           phone: this.editableCustomer.phone,
           address: this.editableCustomer.address
-          // Removed profilePicture
         };
 
         const result = await updateCustomer(this.selectedCustomer.customerId, updates);
 
         // Update notes separately
-        if (this.editableCustomer.information && this.editableCustomer.information.notes) {
-          await updateNotes(this.selectedCustomer.customerId, this.editableCustomer.information.notes);
-        }
+        const notesValue = this.editableCustomer.notes || "";
+        console.log("Sending notes update:", notesValue);
+        await updateNotes(this.selectedCustomer.customerId, notesValue);
 
         if (result.success) {
           // Refetch the customer to get the latest data
@@ -403,10 +493,103 @@ export default {
       }
     },
 
-    // For profile picture update
-    updateProfilePicture() {
-      // Disable profile picture uploads due to payload size limits
-      alert("Profile picture uploads are temporarily disabled due to server limitations.");
+    async updateProfilePicture(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert("Only image files are allowed.");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File is too large. Maximum size is 5MB.");
+        return;
+      }
+
+      try {
+        this.loading = true;
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        reader.onload = async (e) => {
+          try {
+            // Create a canvas to resize the image
+            const img = new Image();
+            img.src = e.target.result;
+
+            await new Promise(resolve => {
+              img.onload = resolve;
+            });
+
+            // Calculate new dimensions (max 500px width/height)
+            let width = img.width;
+            let height = img.height;
+            const maxSize = 500;
+
+            if (width > height && width > maxSize) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            } else if (height > maxSize) {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+
+            // Create canvas and resize
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw resized image to canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Get compressed base64 (0.7 quality JPEG)
+            const base64Image = canvas.toDataURL('image/jpeg', 0.7);
+
+            // Upload the image
+            const response = await uploadCustomerProfilePicture(
+              this.selectedCustomer.customerId,
+              base64Image
+            );
+
+            if (response.success) {
+              // Update local state
+              this.editableCustomer.profilePicture = response.profilePictureUrl;
+
+              // Update the customer in the contacts list
+              const contactIndex = this.contacts.findIndex(
+                c => c.customerId === this.selectedCustomer.customerId
+              );
+
+              if (contactIndex !== -1) {
+                // Create a new object to ensure reactivity
+                this.contacts[contactIndex] = {
+                  ...this.contacts[contactIndex],
+                  profilePicture: response.profilePictureUrl
+                };
+              }
+
+              // Refetch the customer to get updated data
+              await this.selectCustomer({
+                customerId: this.selectedCustomer.customerId
+              });
+
+            }
+          } catch (error) {
+            console.error("Error uploading profile picture:", error);
+            alert(`Failed to upload profile picture: ${error.message}`);
+          } finally {
+            this.loading = false;
+          }
+        };
+      } catch (error) {
+        console.error("Error processing image:", error);
+        alert(`Error processing image: ${error.message}`);
+        this.loading = false;
+      }
     },
 
     async addTask() {
@@ -514,8 +697,11 @@ export default {
 
     isUserAssigned(userId) {
       if (!this.selectedCustomer || !this.selectedCustomer.assignedUsers) return false;
-      return this.selectedCustomer.assignedUsers.includes(userId);
+
+      // Ensure consistent string comparison
+      return this.selectedCustomer.assignedUsers.map(String).includes(String(userId));
     },
+
 
     async toggleAssignUser(user) {
       if (!this.selectedCustomer) return;
@@ -552,11 +738,89 @@ export default {
         this.loading = false;
       }
     },
+    uploadImage(event) {
+      const file = event.target.files[0];
+      console.log("Selected file:", file);
 
-    uploadImage() {
-      // Disable profile picture uploads due to payload size limits
-      this.newContact.profilePicture = null;
-      alert("Profile picture uploads are temporarily disabled due to server limitations.");
+      if (!file) {
+        console.error("No file selected");
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        console.error("Invalid file type:", file.type);
+        alert("Only image files are allowed.");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        console.error("File too large:", file.size);
+        alert("File is too large. Maximum size is 5MB.");
+        return;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          console.log("File read successful, result length:", e.target.result.length);
+          console.log("Result starts with:", e.target.result.substring(0, 50) + "...");
+
+          // Create a canvas to resize the image
+          const img = new Image();
+          img.onload = () => {
+            console.log("Image loaded, original dimensions:", img.width, "x", img.height);
+
+            // Calculate new dimensions (max 500px width/height)
+            let width = img.width;
+            let height = img.height;
+            const maxSize = 500;
+
+            if (width > height && width > maxSize) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            } else if (height > maxSize) {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+
+            console.log("Resized dimensions:", width, "x", height);
+
+            // Create canvas and resize
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw resized image to canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Get compressed base64 (0.7 quality JPEG)
+            const resizedImage = canvas.toDataURL('image/jpeg', 0.7);
+            console.log("Resized image length:", resizedImage.length);
+            console.log("Resized image starts with:", resizedImage.substring(0, 50) + "...");
+
+            this.newContact.profilePicture = resizedImage;
+          };
+
+          img.onerror = (err) => {
+            console.error("Error loading image:", err);
+            alert("Error processing image. Please try another file.");
+          };
+
+          img.src = e.target.result;
+        } catch (error) {
+          console.error("Error processing image:", error);
+          alert(`Error processing image: ${error.message}`);
+        }
+      };
+
+      reader.onerror = (error) => {
+        console.error("Error reading file:", error);
+        alert("Error reading file. Please try again.");
+      };
+
+      reader.readAsDataURL(file);
     },
 
     resetContactForm() {
@@ -572,6 +836,7 @@ export default {
   },
   mounted() {
     this.fetchContacts();
+    this.fetchAllUsers();
   },
 };
 </script>
@@ -598,11 +863,15 @@ body {
   height: 100%;
 }
 
-/* Left Sidebar: Search & Contacts */
 .left-sidebar {
   flex: 1;
+  min-width: 210px;
+  width: 100%;
+  max-width: 300px;
   background-color: #1E1F22;
-  padding: 16px;
+  padding-top: 16px;
+  padding-right: 16px;
+  padding-left: 2px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #232428;
@@ -736,7 +1005,17 @@ body {
 .tab-content-container {
   flex: 1;
   overflow-y: auto;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
 }
+
+.tab-content-container::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari */
+}
+
 
 .tab-content {
   padding: 20px;
@@ -916,17 +1195,24 @@ body {
 
 /* Right Sidebar: Team Members */
 .right-sidebar {
-  flex: 1.5;
+  flex: 1;
+  min-width: 210px;
+  width: 100%;
+  max-width: 300px;
   background-color: #1E1F22;
-  padding: 16px;
-  color: white;
-  border-left: 1px solid #232428;
+  padding-top: 16px;
+  padding-left: 16px;
+  padding-right: 2px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #232428;
   overflow-y: auto;
 }
 
 .right-sidebar h2 {
   font-size: 18px;
   margin-bottom: 16px;
+  margin-top: 0px;
 }
 
 .team-members {
@@ -1018,8 +1304,10 @@ body {
 .modal input,
 .modal select,
 .modal textarea {
-  box-sizing: border-box; /* This is the key property */
-  padding: 10px 10px; /* Top/bottom and left/right padding */
+  box-sizing: border-box;
+  /* This is the key property */
+  padding: 10px 10px;
+  /* Top/bottom and left/right padding */
   border-radius: 4px;
   border: none;
   background-color: #2B2D31;

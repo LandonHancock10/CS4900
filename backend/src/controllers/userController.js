@@ -10,7 +10,13 @@ export const registerUser = async (req, res) => {
   try {
     console.log("Incoming /signup request body:", req.body);
     const result = await signupUser(req.body);
-    res.status(201).json(result);
+    
+    // Ensure the userId is included in the response
+    res.status(201).json({
+      success: result.success,
+      message: result.message,
+      userId: result.userId
+    });
   } catch (error) {
     console.error("Signup Error:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -140,5 +146,32 @@ export const uploadUserProfilePicture = async (req, res) => {
       success: false,
       message: error.message || "Failed to upload profile picture"
     });
+  }
+};
+
+/**
+ * Controller to fetch all users (for assigning to customers)
+ */
+export const fetchAllUsers = async (req, res) => {
+  try {
+    const params = {
+      TableName: "Users",
+    };
+
+    const result = await dynamoDB.scan(params).promise();
+
+    // Only return public fields (no passwordHash)
+    const sanitizedUsers = result.Items.map(user => ({
+      userId: user.userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      profilePicture: user.profilePicture || null,
+    }));
+
+    res.status(200).json({ users: sanitizedUsers });
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch users" });
   }
 };

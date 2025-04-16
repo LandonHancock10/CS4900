@@ -72,6 +72,10 @@ functions:
           path: customers/{customerId}/users
           method: put
           cors: true
+      - http:
+          path: customers/{customerId}/profile-picture
+          method: post
+          cors: true
 
 package:
   include:

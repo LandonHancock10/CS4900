@@ -37,7 +37,7 @@ export const signupUser = async ({ email, password, firstName, lastName, profile
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = uuidv4();
+    const userId = uuidv4(); // Backend generates the UUID
     
     const newUser = {
       userId,
@@ -51,7 +51,8 @@ export const signupUser = async ({ email, password, firstName, lastName, profile
 
     await dynamoDB.put({ TableName: USERS_TABLE, Item: newUser }).promise();
 
-    return { success: true, message: "User created successfully!" };
+    // Return the userId in the result
+    return { success: true, message: "User created successfully!", userId: userId };
   } catch (error) {
     console.error("Signup error:", error);
     throw new Error(error.message || "Signup failed.");

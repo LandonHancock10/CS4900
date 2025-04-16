@@ -17,7 +17,6 @@
       <nav class="menu-items">
         <router-link to="/work" class="menu-link">Work</router-link>
         <router-link to="/communicate" class="menu-link">Communicate</router-link>
-        <router-link to="/settings" class="menu-link">Settings</router-link>
       </nav>
     </div>
   </header>
@@ -34,7 +33,8 @@ export default {
       userProfileUrl: null,
       defaultProfilePic: defaultImage,
       userId: null,
-      lastChecked: 0
+      lastChecked: 0,
+      users: [],
     };
   },
   mounted() {

@@ -24,10 +24,7 @@ export const createCustomer = async ({ name, address, companyName, email, phone,
       phone,
       profilePicture: profilePicture || null,
       createdAt: new Date().toISOString(),
-      // Simplified tabs structure
-      information: {
-        notes: ""
-      },
+      notes: "",
       tasks: [],
       assignedUsers: []
     },
@@ -165,14 +162,14 @@ export const updateTasks = async (customerId, tasks) => {
  * Update customer notes.
  */
 export const updateNotes = async (customerId, notes) => {
-  if (!customerId) {
-    throw new Error("Customer ID is required");
-  }
+  if (!customerId) throw new Error("Customer ID is required");
+
+  console.log(`Updating notes for customer ${customerId}:`, notes);
 
   const params = {
     TableName: CUSTOMERS_TABLE,
     Key: { customerId },
-    UpdateExpression: "SET information.notes = :notes",
+    UpdateExpression: "SET notes = :notes", // Changed from information.notes
     ExpressionAttributeValues: {
       ":notes": notes
     },
@@ -181,6 +178,7 @@ export const updateNotes = async (customerId, notes) => {
 
   try {
     const result = await dynamoClient.send(new UpdateCommand(params));
+    
     return { 
       success: true, 
       message: "Notes updated successfully",

@@ -128,9 +128,7 @@ export const createCustomer = async (customer) => {
   }
 
   try {
-    // Remove profile picture handling to avoid size issues
-    // eslint-disable-next-line no-unused-vars
-    const { profilePicture, ...customerData } = customer;
+    const {...customerData } = customer;
     
     const response = await axiosInstance.post("/customers", customerData);
     return response.data;
@@ -193,10 +191,16 @@ export const updateNotes = async (customerId, notes) => {
   if (!customerId) throw new Error("Customer ID is required");
 
   try {
-    const response = await axiosInstance.put(`/customers/${customerId}/notes`, notes);
+    // If notes is not a string, convert it
+    const notesStr = typeof notes === 'string' ? notes : String(notes);
+    
+    console.log(`Sending notes update for customer ${customerId}:`, notesStr);
+    
+    // Send a simple object with the notes string
+    const response = await axiosInstance.put(`/customers/${customerId}/notes`, { notes: notesStr });
     return response.data;
   } catch (error) {
-    handleApiError(error, "updating notes");
+    return handleApiError(error, "updating notes");
   }
 };
 
@@ -235,13 +239,66 @@ export const uploadUserProfilePicture = async (userId, base64Image) => {
   }
 
   try {
+    console.log(`Attempting to upload profile picture for user: ${userId}`);
+    
     // Send base64 image instead of FormData
     const response = await axiosInstance.post(`/users/${userId}/profile-picture`, {
       profilePicture: base64Image
     });
     
+    console.log("Profile picture upload response:", response.data);
     return response.data;
   } catch (error) {
-    handleApiError(error, "uploading profile picture");
+    if (error.response && error.response.status === 413) {
+      console.error("Payload too large. Image needs to be smaller.");
+      throw new Error("Image is too large. Please use a smaller image.");
+    }
+    return handleApiError(error, "uploading profile picture");
+  }
+};
+
+export const uploadCustomerProfilePicture = async (customerId, base64Image) => {
+  if (!customerId || !base64Image) {
+    console.error("Missing required data:", { 
+      hasCustomerId: !!customerId, 
+      hasImage: !!base64Image,
+      imageLength: base64Image ? base64Image.length : 0 
+    });
+    throw new Error("Customer ID and profile picture are required");
+  }
+
+  try {
+    console.log(`Attempting to upload profile picture for customer: ${customerId}`);
+    console.log(`Base64 image length: ${base64Image.length}`);
+    console.log(`Base64 image starts with: ${base64Image.substring(0, 50)}...`);
+    
+    // Send base64 image instead of FormData
+    const response = await axiosInstance.post(`/customers/${customerId}/profile-picture`, {
+      profilePicture: base64Image
+    });
+    
+    console.log("Profile picture upload response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading customer profile picture:", error);
+    if (error.response) {
+      console.error("Response data:", error.response.data);
+      console.error("Response status:", error.response.status);
+    }
+    
+    if (error.response && error.response.status === 413) {
+      console.error("Payload too large. Image needs to be smaller.");
+      throw new Error("Image is too large. Please use a smaller image.");
+    }
+    return handleApiError(error, "uploading customer profile picture");
+  }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const response = await axiosInstance.get("/users");
+    return response.data.users;
+  } catch (error) {
+    handleApiError(error, "fetching all users");
   }
 };
