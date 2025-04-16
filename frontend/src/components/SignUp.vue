@@ -56,34 +56,36 @@ export default {
       profilePreview: null,
       errors: {}, // Store validation errors
       isSubmitting: false,
+      profilePictureBase64: null,
     };
   },
   methods: {
     handleProfilePicture(event) {
-      const file = event.target.files[0];
-      if (file) {
-        // Validate file size (5MB max)
-        if (file.size > 5 * 1024 * 1024) {
-          alert("File is too large. Maximum size is 5MB.");
-          return;
-        }
-        
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          alert("Only image files are allowed.");
-          return;
-        }
-        
-        this.profilePicture = file;
-        
-        // Create a preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.profilePreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    },
+  const file = event.target.files[0];
+  if (file) {
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File is too large. Maximum size is 5MB.");
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert("Only image files are allowed.");
+      return;
+    }
+    
+    this.profilePicture = file;
+    
+    // Create a preview AND store base64 data
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.profilePreview = e.target.result;
+      this.profilePictureBase64 = e.target.result; // Store the base64 data
+    };
+    reader.readAsDataURL(file);
+  }
+},
     
     validateForm() {
       this.errors = {};
@@ -112,47 +114,47 @@ export default {
 
       this.isSubmitting = true;
 
-      try {
-        // Generate user ID
-        const userId = uuidv4();
-        
-        // Create user without profile picture first
-        const userData = {
-          userId: userId,
-          firstName: this.firstName,
-          lastName: this.lastName,
-          email: this.email,
-          password: this.password,
-          profilePicture: null, // We'll update this after upload
-        };
+  try {
+    // Generate user ID
+    const userId = uuidv4();
+    
+    // Create user without profile picture first
+    const userData = {
+      userId: userId,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      email: this.email,
+      password: this.password,
+      profilePicture: null, // We'll update this after upload
+    };
 
-        // Create the user
-        const response = await createUser(userData);
-        
-        if (response.success) {
-          // If profile picture was selected, upload it
-          if (this.profilePicture) {
-            try {
-              const uploadResponse = await uploadUserProfilePicture(userId, this.profilePicture);
-              console.log("Profile picture uploaded:", uploadResponse);
-            } catch (uploadError) {
-              console.error("Error uploading profile picture:", uploadError);
-              // Continue anyway since the user was created
-            }
-          }
-          
-          console.log("User created successfully:", response);
-          this.$router.push("/"); // Redirect to login page after signup
-        } else {
-          alert(response.message || "Error creating account.");
+    // Create the user
+    const response = await createUser(userData);
+    
+    if (response.success) {
+      // If profile picture was selected, upload it using base64
+      if (this.profilePictureBase64) {
+        try {
+          const uploadResponse = await uploadUserProfilePicture(userId, this.profilePictureBase64);
+          console.log("Profile picture uploaded:", uploadResponse);
+        } catch (uploadError) {
+          console.error("Error uploading profile picture:", uploadError);
+          // Continue anyway since the user was created
         }
-      } catch (error) {
-        console.error("Error creating user:", error);
-        alert("An error occurred while creating the account.");
-      } finally {
-        this.isSubmitting = false;
       }
-    },
+      
+      console.log("User created successfully:", response);
+      this.$router.push("/"); // Redirect to login page after signup
+    } else {
+      alert(response.message || "Error creating account.");
+    }
+  } catch (error) {
+    console.error("Error creating user:", error);
+    alert("An error occurred while creating the account.");
+  } finally {
+    this.isSubmitting = false;
+  }
+},
   },
 };
 </script>

@@ -15,6 +15,9 @@ provider:
         - "dynamodb:GetItem"
         - "dynamodb:UpdateItem"
         - "dynamodb:DeleteItem"
+        - "s3:PutObject"
+        - "s3:GetObject"
+        - "s3:ListBucket"
       Resource: "*"
 
 functions:
@@ -52,6 +55,14 @@ functions:
       - http:
           path: customers/{customerId}/tasks
           method: put
+          cors: true
+      - http:
+          path: users/{id}/profile-picture
+          method: post
+          cors: true
+      - http:
+          path: users/{id}
+          method: get
           cors: true
       - http:
           path: customers/{customerId}/notes

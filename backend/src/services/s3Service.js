@@ -2,20 +2,13 @@ import AWS from "aws-sdk";
 
 // Use your existing AWS configuration
 AWS.config.update({
-  region: process.env.AWS_REGION || "us-west-1",
+  region: process.env.AWS_REGION || "us-west-2",
 });
 
 const s3 = new AWS.S3();
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || "webspark-crm";
 
-/**
- * Upload a file to S3
- * @param {Buffer} fileBuffer - The file buffer
- * @param {string} entityType - Type of entity (user/customer)
- * @param {string} entityId - ID of the entity (userId/customerId)
- * @param {string} originalName - Original file name
- * @returns {Promise<string>} - The S3 URL of the uploaded file
- */
+
 export const uploadProfilePicture = async (fileBuffer, entityType, entityId, originalName) => {
   if (!fileBuffer) throw new Error("File buffer is required");
   
@@ -30,7 +23,6 @@ export const uploadProfilePicture = async (fileBuffer, entityType, entityId, ori
     Key: fileName,
     Body: fileBuffer,
     ContentType: `image/${fileExtension}`,
-    ACL: "public-read",
   };
 
   try {

@@ -229,25 +229,15 @@ export const deleteCustomer = async (customerId) => {
   }
 };
 
-/**
- * Upload a profile picture for a user
- * @param {string} userId - The user ID
- * @param {File} file - The profile picture file
- * @returns {Promise<object>} - Response data
- */
-export const uploadUserProfilePicture = async (userId, file) => {
-  if (!userId || !file) {
+export const uploadUserProfilePicture = async (userId, base64Image) => {
+  if (!userId || !base64Image) {
     throw new Error("User ID and profile picture are required");
   }
 
   try {
-    const formData = new FormData();
-    formData.append("profilePicture", file);
-    
-    const response = await axiosInstance.post(`/users/${userId}/profile-picture`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
+    // Send base64 image instead of FormData
+    const response = await axiosInstance.post(`/users/${userId}/profile-picture`, {
+      profilePicture: base64Image
     });
     
     return response.data;

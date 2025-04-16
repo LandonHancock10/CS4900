@@ -40,7 +40,7 @@ export default {
   mounted() {
     // Initial load
     this.getUserIdFromToken();
-    
+
     // Set up interval to refresh profile every minute
     this.profileRefreshInterval = setInterval(() => {
       this.getUserIdFromToken();
@@ -77,10 +77,10 @@ export default {
               .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
               .join("")
           );
-          
+
           const payload = JSON.parse(jsonPayload);
           this.userId = payload.userId;
-          
+
           // Load user profile if we have a user ID
           if (this.userId) {
             this.loadUserProfile();
@@ -90,12 +90,18 @@ export default {
         }
       }
     },
-    
+
     async loadUserProfile() {
       try {
+        console.log("Loading user profile for ID:", this.userId);
         const user = await getUser(this.userId);
+        console.log("User data received:", user);
+
         if (user && user.profilePicture) {
+          console.log("Setting profile picture URL:", user.profilePicture);
           this.userProfileUrl = user.profilePicture;
+        } else {
+          console.log("No profile picture found for user");
         }
       } catch (error) {
         console.error("Error loading user profile:", error);
@@ -108,14 +114,17 @@ export default {
 <style scoped>
 /* Header bar */
 .header {
-  background-color: #000000; /* Black bar */
-  height: 80px; /* Set consistent height for the bar */
+  background-color: #000000;
+  /* Black bar */
+  height: 80px;
+  /* Set consistent height for the bar */
   width: 100%;
   position: fixed;
   top: 0;
   left: 0;
   display: flex;
-  align-items: center; /* Vertically center content */
+  align-items: center;
+  /* Vertically center content */
   justify-content: center;
   z-index: 100000;
 }
@@ -123,16 +132,20 @@ export default {
 /* Flex container for the logo, profile picture, and menu */
 .nav-content {
   display: flex;
-  align-items: center; /* Vertically center items */
+  align-items: center;
+  /* Vertically center items */
   width: 100%;
-  max-width: 95%; /* Set max width for the nav content */
-  margin: 0 auto; /* Center the nav content horizontally */
+  max-width: 95%;
+  /* Set max width for the nav content */
+  margin: 0 auto;
+  /* Center the nav content horizontally */
   position: relative;
 }
 
 /* Profile picture container */
 .profile-picture-container {
-  margin-right: 16px; /* Add spacing between profile picture and logo */
+  margin-right: 16px;
+  /* Add spacing between profile picture and logo */
   width: 40px;
   height: 40px;
 }
@@ -140,41 +153,51 @@ export default {
 .profile-picture {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Maintain aspect ratio and cover the entire container */
-  border-radius: 50%; /* Make it circular */
-  border: 2px solid #ffffff; /* Optional border for aesthetics */
+  object-fit: cover;
+  /* Maintain aspect ratio and cover the entire container */
+  border-radius: 50%;
+  /* Make it circular */
+  border: 2px solid #ffffff;
+  /* Optional border for aesthetics */
 }
 
 /* Centered logo */
 .logo-container {
   position: absolute;
-  left: 50%; /* Center horizontally */
+  left: 50%;
+  /* Center horizontally */
   transform: translateX(-50%);
 }
 
 .logo {
-  width: 60px; /* Adjust logo size */
+  width: 60px;
+  /* Adjust logo size */
   height: 60px;
   object-fit: cover;
-  cursor: pointer; /* Makes it clear that the logo is clickable */
+  cursor: pointer;
+  /* Makes it clear that the logo is clickable */
 }
 
 /* Menu items container */
 .menu-items {
   display: flex;
-  gap: 24px; /* Space between menu items */
-  margin-left: auto; /* Push menu to the right */
+  gap: 24px;
+  /* Space between menu items */
+  margin-left: auto;
+  /* Push menu to the right */
 }
 
 /* Menu links */
 .menu-link {
-  color: #F2F3F5; /* White text */
+  color: #F2F3F5;
+  /* White text */
   font-size: 16px;
   text-decoration: none;
   font-weight: 600;
 }
 
 .menu-link:hover {
-  color: #5865F2; /* Button hover blue */
+  color: #5865F2;
+  /* Button hover blue */
 }
 </style>
