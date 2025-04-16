@@ -45,4 +45,4 @@ jobs:
 
       - name: Sync Files to S3
         working-directory: frontend
-        run: aws s3 sync ./dist s3://webspark-crm --delete
+        run: aws s3 sync ./dist s3://webspark-crm --delete --exclude "users/*" --exclude "customers/*"
