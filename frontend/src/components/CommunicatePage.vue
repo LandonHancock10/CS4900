@@ -915,7 +915,6 @@ body {
   width: 100%;
   max-width: 300px;
   background-color: #1E1F22;
-  padding-top: 56px;
   padding-right: 16px;
   padding-left: 2px;
   display: flex;
@@ -1013,7 +1012,6 @@ body {
   background-color: #36393F;
   color: white;
   height: 100%;
-  padding-top: 20px;
 }
 
 .panel-layout {
