@@ -3,6 +3,8 @@
 .env.local
 .env.*.local
 
+/frontend/
+
 # Ignore dependencies
 node_modules/
 node_modules/**

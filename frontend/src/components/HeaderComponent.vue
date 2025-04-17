@@ -15,8 +15,6 @@
 
       <!-- Right-Aligned Menu -->
       <nav class="menu-items">
-        <router-link to="/work" class="menu-link">Work</router-link>
-        <router-link to="/communicate" class="menu-link">Communicate</router-link>
       </nav>
     </div>
   </header>

@@ -2,15 +2,20 @@
   <div class="communicate-page">
     <HeaderComponent />
 
-    <div class="content-container">
+    <div class="content-container" :class="{ 'mobile-view': isMobile }">
       <!-- Left Sidebar: Search & Contacts -->
-      <div class="left-sidebar">
+      <div class="left-sidebar" :class="{ 'mobile-sidebar': isMobile, 'show': showLeftSidebar }"
+        v-if="!isMobile || showLeftSidebar">
+        <div v-if="isMobile" class="mobile-sidebar-header">
+        </div>
+
         <input type="text" placeholder="Search" class="search-bar" />
         <button class="add-new" @click="openModal">+ Add New</button>
 
         <div class="contacts">
-          <div class="contact" v-for="contact in contacts" :key="contact.customerId" @click="selectCustomer(contact)"
-            :class="{ 'active': selectedCustomer && selectedCustomer.customerId === contact.customerId }">
+          <div class="contact" v-for="contact in contacts" :key="contact.customerId"
+            @click="selectCustomer(contact); isMobile && toggleLeftSidebar(); showWorkPage = false;"
+            :class="{ 'active': selectedCustomer && selectedCustomer.customerId === contact.customerId && !showWorkPage, 'left-indicator': true }">
             <img :src="contact.profilePicture || defaultAvatar" alt="Avatar" class="contact-avatar" />
             <span class="contact-name">{{ contact.name }}</span>
             <button class="delete-btn" @click.stop="confirmDeleteCustomer(contact)">×</button>
@@ -18,8 +23,14 @@
         </div>
       </div>
 
-      <!-- Customer Details Panel without Tabs -->
-      <div v-if="selectedCustomer" class="customer-details-panel">
+      <!-- Customer Details Panel -->
+      <div v-if="selectedCustomer && !showWorkPage" class="customer-details-panel" :class="{ 'mobile-main': isMobile }">
+        <!-- Mobile sidebar triggers within customer panel -->
+        <div class="mobile-sidebar-triggers" v-if="isMobile">
+          <span class="trigger-left" @click="toggleLeftSidebar">← Contacts</span>
+          <span class="trigger-right" @click="toggleRightSidebar">Assigned Users →</span>
+        </div>
+
         <div class="panel-layout no-tabs">
           <div class="tab-content-container">
             <div class="tab-content">
@@ -78,7 +89,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="new-task">
+                <div class="new-task" :class="{ 'mobile-new-task': isMobile }">
                   <input type="text" v-model="newTaskTitle" placeholder="Task title" />
                   <input type="date" v-model="newTaskDueDate" />
                   <button @click="addTask" class="add-button">Add Task</button>
@@ -89,8 +100,55 @@
         </div>
       </div>
 
+      <!-- Work Page (All Tasks View) -->
+      <div v-if="showWorkPage" class="customer-details-panel work-page" :class="{ 'mobile-main': isMobile }">
+        <!-- Mobile sidebar triggers within work panel -->
+        <div class="mobile-sidebar-triggers" v-if="isMobile">
+          <span class="trigger-left" @click="toggleLeftSidebar">← Contacts</span>
+          <span class="trigger-right" @click="toggleRightSidebar">Assigned Users →</span>
+        </div>
+
+        <div class="panel-layout no-tabs">
+          <div class="tab-content-container">
+            <div class="tab-content">
+              <div class="info-tab">
+                <div class="work-page-header">
+                  <h2>My Assigned Tasks</h2>
+                  <div class="filter-controls">
+                    <label class="checkbox-container">
+                      <input type="checkbox" v-model="showCompletedTasks">
+                      <span class="checkmark"></span>
+                      Show Completed
+                    </label>
+                  </div>
+                </div>
+
+                <div class="tasks-container all-tasks">
+                  <div v-if="assignedTasks.length === 0" class="no-tasks">
+                    No tasks assigned to you yet.
+                  </div>
+                  <div v-else class="task-list">
+                    <!-- Use v-for with key that includes both index and task identity -->
+                    <div v-for="(task, idx) in filteredAssignedTasks"
+                      :key="`${task.customerId}-${task.originalIndex}-${idx}`" class="task all-task">
+                      <!-- Bind :checked directly rather than using v-model -->
+                      <input type="checkbox" :checked="task.completed" @change="updateTaskCompletion(task, $event)" />
+                      <div class="task-details">
+                        <span :class="{ 'completed': task.completed }">{{ task.title }}</span>
+                        <span class="task-customer">{{ task.customerName }}</span>
+                      </div>
+                      <span class="due-date">{{ formatDate(task.dueDate) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Empty State when no customer is selected -->
-      <div v-else class="empty-state">
+      <div v-if="!selectedCustomer && !showWorkPage" class="empty-state" :class="{ 'mobile-main': isMobile }">
         <div class="empty-content">
           <img :src="defaultAvatar" alt="Empty state" class="empty-icon" />
           <h2>Select a customer to view details</h2>
@@ -99,36 +157,41 @@
       </div>
 
       <!-- Right Sidebar: Team Members and Assigned Users -->
-      <div class="right-sidebar">
+      <div class="right-sidebar" :class="{ 'mobile-sidebar': isMobile, 'show': showRightSidebar }"
+        v-if="!isMobile || showRightSidebar">
         <h2>Team Members</h2>
 
-        <!-- Assign Self Button -->
-        <button class="add-new" @click="assignSelfToCustomer">Assign Self to Contact</button>
+        <!-- View Assigned Tasks Button -->
+        <button class="add-new view-tasks-btn" @click="toggleWorkPage">
+          {{ showWorkPage ? 'Back to Customer View' : 'View Assigned Tasks' }}
+        </button>
 
-<!-- Assigned Users List -->
-<div class="contacts" style="margin-top: 12px;">
-  <div
-    class="contact"
-    v-for="member in assignedUsersDetails"
-    :key="member.id"
-  >
-    <img :src="member.avatar || defaultAvatar" alt="Avatar" class="contact-avatar" />
-    <span class="contact-name">{{ member.name }}</span>
+        <!-- Assign Self Button (only show when not in work page) -->
+        <button v-if="selectedCustomer && !showWorkPage" class="add-new" style="margin-top: 8px;"
+          @click="assignSelfToCustomer">
+          Assign Self to Contact
+        </button>
 
-    <!-- Remove Assigned User Button -->
-    <button
-      class="delete-btn"
-      @click.stop="removeAssignedUser(member.id)"
-    >×</button>
-  </div>
-</div>
+        <!-- Assigned Users List -->
+        <div class="contacts" style="margin-top: 12px;">
+          <div class="contact right-indicator" v-for="member in assignedUsersDetails" :key="member.id">
+            <img :src="member.avatar || defaultAvatar" alt="Avatar" class="contact-avatar" />
+            <span class="contact-name">{{ member.name }}</span>
+
+            <!-- Remove Assigned User Button -->
+            <button class="delete-btn" @click.stop="removeAssignedUser(member.id)">×</button>
+          </div>
+        </div>
       </div>
 
+      <!-- Overlay when mobile sidebar is open -->
+      <div v-if="isMobile && (showLeftSidebar || showRightSidebar)" class="mobile-overlay" @click="closeAllSidebars">
+      </div>
     </div>
 
     <!-- MODAL FOR ADDING CONTACT -->
     <div v-if="showModal" class="modal-overlay">
-      <div class="modal">
+      <div class="modal" :class="{ 'mobile-modal': isMobile }">
         <h2>Add a New Contact</h2>
         <form @submit.prevent="saveContact">
           <div class="form-group">
@@ -163,7 +226,7 @@
 
     <!-- MODAL FOR CONFIRMING DELETION -->
     <div v-if="showDeleteModal" class="modal-overlay">
-      <div class="modal small-modal">
+      <div class="modal small-modal" :class="{ 'mobile-modal': isMobile }">
         <h2>Confirm Deletion</h2>
         <p>Are you sure you want to delete customer "{{ customerToDelete?.name }}"?</p>
         <div class="button-group">
@@ -206,6 +269,7 @@ export default {
       editableCustomer: null,
       activeTab: 'information',
       team: [],
+      windowWidth: window.innerWidth,
       newContact: {
         name: "",
         address: "",
@@ -218,14 +282,30 @@ export default {
       newTaskDueDate: "",
       defaultAvatar: require('@/assets/logo.png'),
       loading: false,
-      error: null
+      error: null,
+      showLeftSidebar: false,
+      showRightSidebar: false,
+      // New Work Page related data
+      showWorkPage: false,
+      showCompletedTasks: false,
+      assignedTasks: [],
     };
   },
   computed: {
     assignedUsersDetails() {
       if (!this.selectedCustomer || !this.selectedCustomer.assignedUsers) return [];
       return this.team.filter(user => this.selectedCustomer.assignedUsers.includes(user.id));
-    }
+    },
+    isMobile() {
+      return this.windowWidth <= 768;
+    },
+
+    filteredAssignedTasks() {
+      // Always filter based on completion status, even during loading
+      return this.showCompletedTasks
+        ? this.assignedTasks
+        : this.assignedTasks.filter(task => !task.completed);
+    },
   },
   methods: {
     async fetchContacts() {
@@ -246,6 +326,174 @@ export default {
       }
     },
 
+    updateTaskCompletion(task, event) {
+      // Get the new completion state from the checkbox event
+      const isCompleted = event.target.checked;
+
+      // Create a deep copy of the task to avoid reference issues
+      const taskToUpdate = JSON.parse(JSON.stringify(task));
+      taskToUpdate.completed = isCompleted;
+
+      // Call the existing method with the updated task
+      this.updateCustomerTask(taskToUpdate);
+    },
+
+    toggleLeftSidebar() {
+      this.showLeftSidebar = !this.showLeftSidebar;
+    },
+    toggleRightSidebar() {
+      this.showRightSidebar = !this.showRightSidebar;
+    },
+    closeAllSidebars() {
+      this.showLeftSidebar = false;
+      this.showRightSidebar = false;
+    },
+
+    handleResize() {
+      this.windowWidth = window.innerWidth;
+    },
+
+    // Toggle between customer view and work page
+    toggleWorkPage() {
+      this.showWorkPage = !this.showWorkPage;
+
+      if (this.showWorkPage) {
+        this.fetchAssignedTasks();
+      }
+    },
+
+    // Fetch all tasks from customers assigned to the current user
+    async fetchAssignedTasks() {
+      try {
+        this.loading = true;
+
+        // Get current user ID from token
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("You must be logged in to view assigned tasks.");
+          this.loading = false;
+          return;
+        }
+
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId = String(payload.userId);
+
+        // Array to store all assigned tasks
+        this.assignedTasks = [];
+
+        // Get all customers
+        const allCustomers = await getCustomers();
+
+        // Filter customers assigned to the current user
+        const assignedCustomers = allCustomers.filter(customer => {
+          if (!customer.assignedUsers) return false;
+
+          // Normalize assignedUsers to handle different formats
+          const assignedUsers = Array.isArray(customer.assignedUsers)
+            ? customer.assignedUsers.map(id => typeof id === "object" && id.S ? id.S : String(id))
+            : [];
+
+          return assignedUsers.includes(userId);
+        });
+
+        // For each assigned customer, get their full details including tasks
+        for (const customer of assignedCustomers) {
+          const fullCustomer = await getCustomerById(customer.customerId);
+
+          // If customer has tasks, add them to assignedTasks with customer info
+          if (fullCustomer.tasks && fullCustomer.tasks.length > 0) {
+            const customerTasks = fullCustomer.tasks.map(task => ({
+              ...task,
+              customerId: fullCustomer.customerId,
+              customerName: fullCustomer.name,
+              originalIndex: fullCustomer.tasks.indexOf(task)
+            }));
+
+            this.assignedTasks = [...this.assignedTasks, ...customerTasks];
+          }
+        }
+
+        // Sort tasks by due date
+        this.assignedTasks.sort((a, b) => {
+          const dateA = new Date(a.dueDate || 0);
+          const dateB = new Date(b.dueDate || 0);
+          return dateA - dateB;
+        });
+
+        this.loading = false;
+      } catch (error) {
+        console.error("Error fetching assigned tasks:", error);
+        this.loading = false;
+        alert("Failed to load assigned tasks. Please try again.");
+      }
+    },
+
+    async updateCustomerTask(task) {
+      try {
+        // Store the completed state we're going to set
+        const newCompletedState = task.completed;
+
+        // Find the customer this task belongs to
+        const customerId = task.customerId;
+        if (!customerId) {
+          console.error("Task is missing customer ID");
+          return;
+        }
+
+        // Create a copy of the tasks array and update the specific task
+        const taskIndex = this.assignedTasks.findIndex(t =>
+          t.customerId === task.customerId && t.originalIndex === task.originalIndex
+        );
+
+        if (taskIndex !== -1) {
+          // Create a new array with updated tasks to ensure proper reactivity
+          const updatedTasks = this.assignedTasks.map((t, index) => {
+            if (index === taskIndex) {
+              // Create a new object for the task being updated
+              return { ...t, completed: newCompletedState };
+            }
+            // Return other tasks unchanged
+            return t;
+          });
+
+          // Replace the tasks array with our new one
+          this.assignedTasks = updatedTasks;
+        }
+
+        // Update the server without setting global loading state
+        const customer = await getCustomerById(customerId);
+
+        if (customer.tasks && customer.tasks.length > 0 && task.originalIndex !== undefined) {
+          customer.tasks[task.originalIndex].completed = newCompletedState;
+
+          // Save the updated tasks
+          const result = await updateTasks(customerId, customer.tasks);
+
+          if (!result.success) {
+            console.error("Task update failed on server");
+            // Revert the local change if server update failed
+            if (taskIndex !== -1) {
+              this.assignedTasks = this.assignedTasks.map((t, index) => {
+                if (index === taskIndex) {
+                  return { ...t, completed: !newCompletedState };
+                }
+                return t;
+              });
+            }
+          }
+
+          // If the currently selected customer is the one we just updated,
+          // refresh their data to show the changes
+          if (this.selectedCustomer && this.selectedCustomer.customerId === customerId) {
+            this.selectCustomer({ customerId: customerId });
+          }
+        }
+      } catch (error) {
+        console.error("Error updating task:", error);
+        alert("Failed to update task. Please try again.");
+      }
+    },
+
     assignSelfToCustomer() {
       const token = localStorage.getItem("token");
       if (!token) return alert("You must be logged in.");
@@ -263,97 +511,97 @@ export default {
     },
 
     removeAssignedUser(userId) {
-  if (!this.selectedCustomer) return;
+      if (!this.selectedCustomer) return;
 
-  console.log("Removing user ID from assigned list:", userId);
+      console.log("Removing user ID from assigned list:", userId);
 
-  // Normalize and filter
-  const filtered = this.editableCustomer.assignedUsers
-    .map(id => (typeof id === "object" && id.S ? id.S : String(id)))
-    .filter(id => id !== String(userId));
+      // Normalize and filter
+      const filtered = this.editableCustomer.assignedUsers
+        .map(id => (typeof id === "object" && id.S ? id.S : String(id)))
+        .filter(id => id !== String(userId));
 
-  // Trigger Vue reactivity by creating new arrays
-  this.selectedCustomer = {
-    ...this.selectedCustomer,
-    assignedUsers: filtered
-  };
+      // Trigger Vue reactivity by creating new arrays
+      this.selectedCustomer = {
+        ...this.selectedCustomer,
+        assignedUsers: filtered
+      };
 
-  this.editableCustomer = {
-    ...this.editableCustomer,
-    assignedUsers: filtered
-  };
+      this.editableCustomer = {
+        ...this.editableCustomer,
+        assignedUsers: filtered
+      };
 
-  this.updateAssignedUsers();
-},
+      this.updateAssignedUsers();
+    },
 
     async updateAssignedUsers() {
-  try {
-    const cleanUserIds = this.editableCustomer.assignedUsers.map(String); // Normalize all IDs
-    const result = await updateAssignedUsers(this.selectedCustomer.customerId, cleanUserIds);
+      try {
+        const cleanUserIds = this.editableCustomer.assignedUsers.map(String); // Normalize all IDs
+        const result = await updateAssignedUsers(this.selectedCustomer.customerId, cleanUserIds);
 
-    if (result.success) {
-      // Ensure both are updated so UI reflects correctly
-      this.selectedCustomer.assignedUsers = [...cleanUserIds];
-      this.editableCustomer.assignedUsers = [...cleanUserIds];
-    }
-  } catch (error) {
-    console.error("Failed to update assigned users:", error);
-  }
-},
+        if (result.success) {
+          // Ensure both are updated so UI reflects correctly
+          this.selectedCustomer.assignedUsers = [...cleanUserIds];
+          this.editableCustomer.assignedUsers = [...cleanUserIds];
+        }
+      } catch (error) {
+        console.error("Failed to update assigned users:", error);
+      }
+    },
 
     async fetchAllUsers() {
-  try {
-    const users = await getAllUsers();
+      try {
+        const users = await getAllUsers();
 
-    // Normalize the structure to match what the template expects
-    this.team = users.map(u => ({
-      id: u.userId,
-      name: `${u.firstName} ${u.lastName}`,
-      avatar: u.profilePicture || null
-    }));
+        // Normalize the structure to match what the template expects
+        this.team = users.map(u => ({
+          id: u.userId,
+          name: `${u.firstName} ${u.lastName}`,
+          avatar: u.profilePicture || null
+        }));
 
-    console.log("TEAM DATA Normalized:", this.team);
-  } catch (error) {
-    console.error("Failed to fetch all users:", error);
-  }
-},
+        console.log("TEAM DATA Normalized:", this.team);
+      } catch (error) {
+        console.error("Failed to fetch all users:", error);
+      }
+    },
 
     async selectCustomer(customer) {
-  try {
-    this.loading = true;
-    const fullCustomer = await getCustomerById(customer.customerId);
+      try {
+        this.loading = true;
+        const fullCustomer = await getCustomerById(customer.customerId);
 
-    const customerWithDefaults = {
-      ...fullCustomer,
-      notes: fullCustomer.notes || "",
-      tasks: fullCustomer.tasks || [],
-      assignedUsers: this.normalizeAssignedUsers(fullCustomer.assignedUsers || [])
-    };
+        const customerWithDefaults = {
+          ...fullCustomer,
+          notes: fullCustomer.notes || "",
+          tasks: fullCustomer.tasks || [],
+          assignedUsers: this.normalizeAssignedUsers(fullCustomer.assignedUsers || [])
+        };
 
-    this.selectedCustomer = customerWithDefaults;
-    this.editableCustomer = JSON.parse(JSON.stringify(customerWithDefaults));
-    this.activeTab = 'information';
-    this.loading = false;
-    console.log("assignedUsers RAW:", fullCustomer.assignedUsers);
-  } catch (error) {
-    this.error = error.message || "Error fetching customer details";
-    console.error("Error selecting customer:", error);
-    this.loading = false;
-  }
-},
+        this.selectedCustomer = customerWithDefaults;
+        this.editableCustomer = JSON.parse(JSON.stringify(customerWithDefaults));
+        this.activeTab = 'information';
+        this.loading = false;
+        console.log("assignedUsers RAW:", fullCustomer.assignedUsers);
+      } catch (error) {
+        this.error = error.message || "Error fetching customer details";
+        console.error("Error selecting customer:", error);
+        this.loading = false;
+      }
+    },
 
-normalizeAssignedUsers(assignedUsers) {
-  console.log("Normalizing assignedUsers:", assignedUsers);
+    normalizeAssignedUsers(assignedUsers) {
+      console.log("Normalizing assignedUsers:", assignedUsers);
 
-  if (!Array.isArray(assignedUsers)) return [];
-  
-  // Handle array of { S: "uuid" } objects
-  if (assignedUsers.length && typeof assignedUsers[0] === "object" && assignedUsers[0].S) {
-    return assignedUsers.map(u => u.S);
-  }
+      if (!Array.isArray(assignedUsers)) return [];
 
-  return assignedUsers; // Already normalized
-},
+      // Handle array of { S: "uuid" } objects
+      if (assignedUsers.length && typeof assignedUsers[0] === "object" && assignedUsers[0].S) {
+        return assignedUsers.map(u => u.S);
+      }
+
+      return assignedUsers; // Already normalized
+    },
 
     formatDate(dateString) {
       if (!dateString) return '';
@@ -739,14 +987,14 @@ normalizeAssignedUsers(assignedUsers) {
     },
 
     isUserAssigned(userId) {
-  if (!this.selectedCustomer || !this.selectedCustomer.assignedUsers) return false;
+      if (!this.selectedCustomer || !this.selectedCustomer.assignedUsers) return false;
 
-  const normalized = this.selectedCustomer.assignedUsers.map(id =>
-    typeof id === "object" && id.S ? id.S : String(id)
-  );
+      const normalized = this.selectedCustomer.assignedUsers.map(id =>
+        typeof id === "object" && id.S ? id.S : String(id)
+      );
 
-  return normalized.includes(String(userId));
-},
+      return normalized.includes(String(userId));
+    },
 
 
     async toggleAssignUser(user) {
@@ -883,7 +1131,13 @@ normalizeAssignedUsers(assignedUsers) {
   mounted() {
     this.fetchContacts();
     this.fetchAllUsers();
+    window.addEventListener('resize', this.closeAllSidebars);
+    window.addEventListener('resize', this.handleResize);
   },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.closeAllSidebars);
+    window.removeEventListener('resize', this.handleResize);
+  }
 };
 </script>
 
@@ -907,6 +1161,60 @@ body {
   display: flex;
   width: 100%;
   height: 100%;
+  position: relative;
+}
+
+/* Mobile Navigation */
+.mobile-nav {
+  display: flex;
+  width: 100%;
+  height: 50px;
+  background-color: #1E1F22;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  position: relative;
+  z-index: 20;
+  border-bottom: 1px solid #232428;
+}
+
+.mobile-nav-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mobile-title {
+  color: white;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+  text-align: center;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #ED4245;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .left-sidebar {
@@ -922,6 +1230,46 @@ body {
   flex-direction: column;
   border-right: 1px solid #232428;
   overflow-y: auto;
+}
+
+/* Sidebar Base (Hidden by Default) */
+.left-sidebar.mobile-sidebar,
+.right-sidebar.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 80vw;
+  z-index: 1000;
+  background-color: #1E1F22;
+  overflow-y: auto;
+  transition: transform 0.3s ease-in-out;
+  display: none;
+}
+
+/* Show State */
+.left-sidebar.mobile-sidebar.show,
+.right-sidebar.mobile-sidebar.show {
+  display: block;
+}
+
+/* Slide In Animations */
+.left-sidebar.mobile-sidebar {
+  left: 0;
+  transform: translateX(-100%);
+}
+
+.left-sidebar.mobile-sidebar.show {
+  transform: translateX(0);
+}
+
+.right-sidebar.mobile-sidebar {
+  right: 0;
+  left: auto;
+  transform: translateX(100%);
+}
+
+.right-sidebar.mobile-sidebar.show {
+  transform: translateX(0);
 }
 
 .search-bar {
@@ -1003,6 +1351,11 @@ body {
 
 .delete-btn:hover {
   opacity: 1;
+}
+
+/* Mobile view - always show delete button */
+.mobile-sidebar .delete-btn {
+  visibility: visible;
 }
 
 /* Customer Details Panel */
@@ -1183,6 +1536,19 @@ body {
   margin-top: 16px;
 }
 
+/* Mobile new task layout */
+.mobile-new-task {
+  flex-direction: column;
+}
+
+.mobile-new-task input {
+  margin-bottom: 10px;
+}
+
+.mobile-new-task .add-button {
+  margin-top: 5px;
+}
+
 .new-task input {
   padding: 10px;
   border-radius: 4px;
@@ -1252,7 +1618,7 @@ body {
   padding-right: 2px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #232428;
+  border-left: 1px solid #232428;
   overflow-y: auto;
 }
 
@@ -1357,6 +1723,14 @@ body {
   color: white;
 }
 
+/* Mobile modal */
+.mobile-modal {
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
 .small-modal {
   width: 300px;
 }
@@ -1448,5 +1822,275 @@ body {
 
 .cancel-button {
   background-color: #3C3F44 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .task {
+    flex-wrap: wrap;
+  }
+
+  .task .due-date {
+    width: 100%;
+    margin-left: 28px;
+    margin-top: 5px;
+  }
+
+  .tab-content {
+    padding: 15px;
+  }
+
+  .empty-content {
+    padding: 20px;
+  }
+
+  .empty-content h2 {
+    font-size: 20px;
+  }
+}
+
+.mobile-sidebar-triggers {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: #2B2D31;
+  border-bottom: 1px solid #232428;
+  z-index: 15;
+}
+
+.trigger-left,
+.trigger-right {
+  color: #7289DA;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.mobile-sidebar {
+  display: none;
+}
+
+.mobile-sidebar.show {
+  display: block;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+  background-color: #1E1F22;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+  overflow-y: auto;
+}
+
+.left-sidebar.mobile-sidebar {
+  left: 0;
+  width: 80vw;
+  transform: translateX(-100%);
+}
+
+.left-sidebar.mobile-sidebar.show {
+  transform: translateX(0);
+}
+
+.right-sidebar.mobile-sidebar {
+  right: 0;
+  width: 80vw;
+  transform: translateX(100%);
+}
+
+.right-sidebar.mobile-sidebar.show {
+  transform: translateX(0);
+}
+
+/* Remove padding on mobile */
+@media (max-width: 768px) {
+  .content-container.mobile-view {
+    padding: 0;
+  }
+
+  .customer-details-panel.mobile-main {
+    padding: 0;
+  }
+
+  .tab-content {
+    padding: 15px;
+    padding-bottom: 50px !important;
+  }
+
+  /* Fix sidebars position to account for header */
+  .left-sidebar.mobile-sidebar,
+  .right-sidebar.mobile-sidebar {
+    top: 70px;
+    /* Adjust this to match your header height */
+    height: calc(100vh - 40px);
+    padding-top: 20px;
+  }
+
+  /* Ensure sidebar content starts below header */
+  .mobile-sidebar-header {
+    margin-bottom: 15px;
+  }
+
+}
+
+/* Make sure the mobile sidebar triggers are properly styled */
+.mobile-sidebar-triggers {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background-color: #36393F;
+  border-bottom: 1px solid #36393F;
+}
+
+.trigger-left,
+.trigger-right {
+  color: #7289DA;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Ensure the overlay covers the entire screen */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+/* Work Page Styles */
+.work-page {
+  background-color: #36393F;
+}
+
+.work-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.work-page-header h2 {
+  margin: 0;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+  color: #B9BBBE;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: relative;
+  height: 18px;
+  width: 18px;
+  background-color: #2E3035;
+  border-radius: 3px;
+  margin-right: 8px;
+}
+
+.checkbox-container:hover input~.checkmark {
+  background-color: #3E4045;
+}
+
+.checkbox-container input:checked~.checkmark {
+  background-color: #5865F2;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked~.checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 6px;
+  top: 3px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.all-tasks {
+  margin-top: 10px;
+}
+
+.task.all-task {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  background-color: #2E3035;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.task-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-left: 10px;
+}
+
+.task-customer {
+  font-size: 12px;
+  color: #7289DA;
+  margin-top: 4px;
+}
+
+.view-tasks-btn {
+  background-color: #43b581;
+}
+
+.view-tasks-btn:hover {
+  background-color: #3ca374;
+}
+
+@media (max-width: 768px) {
+  .work-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-controls {
+    margin-top: 10px;
+  }
+
+  .task.all-task {
+    flex-wrap: wrap;
+  }
+
+  .task.all-task .due-date {
+    margin-left: 28px;
+    margin-top: 5px;
+    width: 100%;
+  }
 }
 </style>
