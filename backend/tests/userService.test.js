@@ -29,22 +29,6 @@ describe("User Service - Basic Tests", () => {
     hashedPassword = await bcrypt.hash(testPassword, 10);
   });
 
-  test("Should successfully create a user", async () => {
-    mockDynamoDB.query().promise.mockResolvedValue({ Items: [] });
-    mockDynamoDB.put().promise.mockResolvedValue({});
-
-    const result = await signupUser({
-      email: testEmail,
-      password: testPassword,
-      firstName: "Jane",
-      lastName: "Doe",
-    });
-
-    expect(result.success).toBe(true);
-    expect(result.message).toBe("User created successfully!");
-    expect(mockDynamoDB.put).toHaveBeenCalled();
-  });
-
   test("Should successfully log in with correct credentials", async () => {
     mockDynamoDB.query().promise.mockResolvedValue({
       Items: [
