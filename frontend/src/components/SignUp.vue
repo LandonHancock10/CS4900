@@ -317,4 +317,52 @@ export default {
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* Base styles for the card on all screen sizes */
+.login-card, .signup-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  background-color: #2b2d31;
+  border-radius: 8px;
+  text-align: center;
+  color: #f2f3f5;
+  /* Center the card */
+  margin-left: auto;
+  margin-right: auto;
+  /* Add box-sizing to ensure padding doesn't affect overall width */
+  box-sizing: border-box;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 480px) {
+  .login-card, .signup-card {
+    width: calc(100% - 32px); /* Full width minus margins */
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 16px;
+  }
+  
+  /* Adjust input fields for mobile */
+  .input-field {
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+  
+  /* Adjust button for mobile */
+  .login-button, .signup-button {
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 320px) {
+  .login-card, .signup-card {
+    width: calc(100% - 24px); /* Full width minus margins */
+    margin-left: 12px;
+    margin-right: 12px;
+    padding: 12px;
+  }
+}
 </style>

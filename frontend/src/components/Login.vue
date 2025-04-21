@@ -17,7 +17,9 @@
       <input type="password" v-model="password" placeholder="Password" class="input-field" />
       <p v-if="errors.password" class="error-text">{{ errors.password }}</p>
 
-      <button type="submit" class="login-button">Login</button>
+      <button type="submit" class="login-button" :disabled="isSubmitting">
+        {{ isSubmitting ? 'Logging in...' : 'Login' }}
+      </button>
     </form>
   </div>
 </template>
@@ -31,7 +33,8 @@ export default {
     return {
       email: '',
       password: '',
-      errors: {}, 
+      errors: {},
+      isSubmitting: false,
     };
   },
   methods: {
@@ -51,6 +54,8 @@ export default {
         return;
       }
 
+      this.isSubmitting = true;
+
       try {
         const response = await loginUser(this.email, this.password); // Call loginUser function
         if (response.success) {
@@ -67,6 +72,8 @@ export default {
       } catch (error) {
         console.error('Login error:', error);
         alert('An error occurred while logging in.');
+      } finally {
+        this.isSubmitting = false;
       }
     },
   },
@@ -78,7 +85,8 @@ export default {
   font-family: 'gg sans', sans-serif;
 }
 
-.login-card {
+/* Base styles for the card on all screen sizes */
+.login-card, .signup-card {
   width: 100%;
   max-width: 400px;
   padding: 20px;
@@ -86,8 +94,44 @@ export default {
   border-radius: 8px;
   text-align: center;
   color: #f2f3f5;
+  /* Center the card */
+  margin-left: auto;
+  margin-right: auto;
+  /* Add box-sizing to ensure padding doesn't affect overall width */
+  box-sizing: border-box;
 }
 
+/* Mobile-specific styles */
+@media (max-width: 480px) {
+  .login-card, .signup-card {
+    width: calc(100% - 32px); /* Full width minus margins */
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 16px;
+  }
+  
+  /* Adjust input fields for mobile */
+  .input-field {
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+  
+  /* Adjust button for mobile */
+  .login-button, .signup-button {
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 320px) {
+  .login-card, .signup-card {
+    width: calc(100% - 24px); /* Full width minus margins */
+    margin-left: 12px;
+    margin-right: 12px;
+    padding: 12px;
+  }
+}
 .logo-container {
   margin-bottom: 20px;
 }
@@ -158,7 +202,12 @@ export default {
   cursor: pointer;
 }
 
-.login-button:hover {
+.login-button:hover:not(:disabled) {
   background-color: #4752c4;
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>
