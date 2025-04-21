@@ -31,6 +31,7 @@ body {
   font-family: 'gg sans', sans-serif;
   background-color: #1E1F22;
   color: #F2F3F5;
+  overflow: hidden;
 }
 
 .app-container {
