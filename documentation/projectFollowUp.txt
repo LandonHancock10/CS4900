@@ -1,0 +1,42 @@
+Project Followup
+PROJECT: Sprint 4
+Name: Landon Hancock (10869188)
+Date: 04-22-2025
+Status: Green Light
+
+What did I do?
+
+Deployed the frontend using AWS S3 with custom domain setup
+
+Connected the frontend to an Express backend deployed through AWS Lambda + API Gateway
+
+Built out core CRM features including customer record creation, user assignment, and data retrieval from DynamoDB
+
+Implemented basic authentication flow and session storage
+
+Added UI for profile picture uploads and integrated S3 storage for images
+
+Worked on normalizing assigned user data and rendering it properly on the frontend
+
+
+What problems did I run into?
+
+Setting up profile picture uploads was more complex than expected due to formatting, permissions, and S3 policy requirements
+
+Ran into multiple CORS issues between frontend and backend before finalizing headers and routes
+
+Struggled with mobile responsiveness and layout bugs across devices
+
+Unexpected AWS charges from CloudFront before I disabled it manually
+
+File structure and folder organization got messy and had to be restructured for maintainability
+
+
+What I plan on working on next:
+
+Polish mobile layout and responsive design
+
+Improve error handling and input validation
+
+Prepare documentation and walkthrough for project presentation
+
