@@ -285,8 +285,8 @@ export default {
       error: null,
       showLeftSidebar: false,
       showRightSidebar: false,
-      // New Work Page related data
-      showWorkPage: false,
+      // Show the Work Page by default
+      showWorkPage: true,
       showCompletedTasks: false,
       assignedTasks: [],
     };
@@ -996,7 +996,6 @@ export default {
       return normalized.includes(String(userId));
     },
 
-
     async toggleAssignUser(user) {
       if (!this.selectedCustomer) return;
 
@@ -1131,6 +1130,10 @@ export default {
   mounted() {
     this.fetchContacts();
     this.fetchAllUsers();
+    
+    // Fetch assigned tasks when component is mounted to show them immediately
+    this.fetchAssignedTasks();
+    
     window.addEventListener('resize', this.closeAllSidebars);
     window.addEventListener('resize', this.handleResize);
   },
