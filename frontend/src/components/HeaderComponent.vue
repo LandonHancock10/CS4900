@@ -196,7 +196,6 @@ export default {
       try {
         this.loading = true;
         
-        // Use the correct function from your apiService
         const response = await uploadUserProfilePicture(this.userId, this.newProfilePicture);
         
         if (response.success) {

@@ -189,7 +189,7 @@
       </div>
     </div>
 
-    <!-- MODAL FOR ADDING CONTACT -->
+    <!-- MODAL FOR ADDING CUSTOMER -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal" :class="{ 'mobile-modal': isMobile }">
         <h2>Add a New Contact</h2>
